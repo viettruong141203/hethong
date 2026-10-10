@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Quản Lý Dữ Liệu Hệ Thống</title>
+  <title>Bảng Dữ Liệu Từ API</title>
   <style>
     :root {
       --bg-glass: rgba(18, 20, 26, 0.85);
@@ -26,6 +26,7 @@
       position: relative;
     }
 
+    /* Đốm sáng nền */
     body::before, body::after {
       content: ''; position: fixed; width: 400px; height: 400px;
       border-radius: 50%; filter: blur(100px); z-index: -1; opacity: 0.3;
@@ -47,9 +48,14 @@
     .header { 
       display: flex; justify-content: space-between; align-items: center; 
       border-bottom: 1px solid var(--border-glass); padding-bottom: 20px; margin-bottom: 25px; 
+      flex-wrap: wrap; gap: 10px;
     }
-    .header h2 { margin: 0; font-size: 22px; color: #fff;}
+    .header h2 { margin: 0; font-size: 22px; color: #fff; display: flex; align-items: center; gap: 10px;}
     
+    /* Chấm xanh nhấp nháy báo hiệu đang đọc dữ liệu */
+    .status-dot { width: 12px; height: 12px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.8; } }
+
     .btn-refresh { 
       background: var(--primary); color: #fff; padding: 10px 20px; 
       border-radius: 10px; border: none; font-size: 14px; font-weight: 600; 
@@ -64,24 +70,22 @@
       padding-bottom: 5px; border-bottom: 2px solid var(--primary);
     }
 
-    /* Định dạng bảng dữ liệu */
+    /* Bảng hiển thị dữ liệu */
     .table-container {
-      width: 100%;
-      overflow-x: auto;
+      width: 100%; overflow-x: auto;
       background: rgba(0, 0, 0, 0.2);
-      border-radius: 12px;
-      border: 1px solid var(--table-border);
+      border-radius: 12px; border: 1px solid var(--table-border);
     }
     
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
     th, td { padding: 12px 16px; border-bottom: 1px solid var(--table-border); white-space: nowrap;}
-    th { background: rgba(255, 255, 255, 0.05); color: #fff; font-weight: 600; }
+    th { background: rgba(255, 255, 255, 0.05); color: #fff; font-weight: 600; text-transform: uppercase; font-size: 12px;}
     tr:last-child td { border-bottom: none; }
     tr:hover { background: rgba(255, 255, 255, 0.03); }
 
-    .empty-state { text-align: center; color: var(--text-muted); font-style: italic; padding: 30px; font-size: 14px; }
+    .empty-state { text-align: center; color: var(--text-muted); font-style: italic; padding: 40px; font-size: 14px; background: rgba(0,0,0,0.2); border-radius: 12px; }
     
-    /* Thu gọn dữ liệu quá dài (như mảng Vector) */
+    /* Thu gọn cột chứa mã dài (như mảng Face ID) */
     .truncate { max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle;}
   </style>
 </head>
@@ -89,17 +93,18 @@
 
   <div class="container">
     <div class="header">
-      <h2>📊 Bảng Quản Trị Dữ Liệu</h2>
+      <h2><span class="status-dot"></span> Bảng Dữ Liệu Trực Tiếp</h2>
       <button class="btn-refresh" onclick="renderAllData()">↻ Làm mới bảng</button>
     </div>
 
+    <!-- Nơi chứa các bảng tự động vẽ -->
     <div id="dataDashboard">
-      <!-- Các bảng dữ liệu sẽ được Javascript tự động vẽ vào đây -->
+      <div class="empty-state">Đang nạp dữ liệu từ bộ nhớ...</div>
     </div>
   </div>
 
   <script>
-    // Khởi tạo ngay khi mở trang và lặp lại mỗi 2 giây
+    // Tự động quét bộ nhớ 2 giây/lần để vẽ lại bảng nếu có dữ liệu mới
     document.addEventListener("DOMContentLoaded", () => {
       renderAllData();
       setInterval(renderAllData, 2000); 
@@ -107,11 +112,13 @@
 
     function renderAllData() {
       const dashboard = document.getElementById("dataDashboard");
-      dashboard.innerHTML = ""; // Xóa bảng cũ trước khi vẽ bảng mới
-
-      // Khai báo 3 sheet cần lấy từ localStorage
+      
+      // Các sheet muốn hiển thị
       const targetSheets = ["Home", "Ngân hàng", "Face ID"];
       let hasData = false;
+      
+      // Tạo một biến chứa toàn bộ HTML mới để tránh màn hình bị giật khi cập nhật
+      let newHtmlContent = "";
 
       targetSheets.forEach(sheet => {
         const rawData = localStorage.getItem("app_data_" + sheet);
@@ -121,8 +128,7 @@
             const parsedData = JSON.parse(rawData);
             if (Array.isArray(parsedData) && parsedData.length > 0) {
               hasData = true;
-              const section = createTableSection(sheet, parsedData);
-              dashboard.appendChild(section);
+              newHtmlContent += createTableHTML(sheet, parsedData);
             }
           } catch (e) {
             console.error(`Lỗi đọc dữ liệu sheet ${sheet}`);
@@ -130,66 +136,50 @@
         }
       });
 
-      if (!hasData) {
-        dashboard.innerHTML = `<div class="empty-state">Chưa có dữ liệu nào được lưu trong máy. Hãy mở trang chủ để hệ thống tự động tải về.</div>`;
+      if (hasData) {
+        // Chỉ cập nhật DOM nếu nội dung có sự thay đổi để tránh giật lag thanh cuộn
+        if (dashboard.innerHTML !== newHtmlContent) {
+          dashboard.innerHTML = newHtmlContent;
+        }
+      } else {
+        dashboard.innerHTML = `<div class="empty-state">Chưa có dữ liệu. Vui lòng mở Trang Chủ (home.html) để hệ thống tự động tải dữ liệu từ API về máy.</div>`;
       }
     }
 
-    // Hàm tạo bảng HTML tự động dựa trên các cột có trong JSON
-    function createTableSection(sheetName, dataArray) {
-      const section = document.createElement("div");
-      section.className = "sheet-section";
+    // Hàm tạo HTML cho bảng
+    function createTableHTML(sheetName, dataArray) {
+      let html = `<div class="sheet-section">
+                    <div class="sheet-title">📁 Dữ liệu: ${sheetName}</div>
+                    <div class="table-container">
+                      <table>
+                        <thead><tr>`;
       
-      const title = document.createElement("div");
-      title.className = "sheet-title";
-      title.textContent = `📁 Dữ liệu bảng: ${sheetName}`;
-      section.appendChild(title);
-
-      const tableContainer = document.createElement("div");
-      tableContainer.className = "table-container";
-
-      const table = document.createElement("table");
-      
-      // Lấy danh sách tiêu đề cột từ object đầu tiên
+      // Lấy tiêu đề cột từ dòng đầu tiên
       const headers = Object.keys(dataArray[0]);
-      
-      // Vẽ dòng Tiêu đề (Thead)
-      const thead = document.createElement("thead");
-      const headerRow = document.createElement("tr");
       headers.forEach(headerText => {
-        const th = document.createElement("th");
-        th.textContent = headerText;
-        headerRow.appendChild(th);
+        html += `<th>${headerText}</th>`;
       });
-      thead.appendChild(headerRow);
-      table.appendChild(thead);
+      
+      html += `</tr></thead><tbody>`;
 
-      // Vẽ các dòng Dữ liệu (Tbody)
-      const tbody = document.createElement("tbody");
+      // Điền dữ liệu từng dòng
       dataArray.forEach(rowItem => {
-        const row = document.createElement("tr");
-        
+        html += `<tr>`;
         headers.forEach(key => {
-          const td = document.createElement("td");
           let cellValue = rowItem[key] !== undefined && rowItem[key] !== null ? rowItem[key] : "";
           
-          // Nếu dữ liệu là chuỗi dài (như chuỗi Vector của Face ID), cắt bớt cho gọn
-          if (typeof cellValue === 'string' && cellValue.length > 50) {
-            td.innerHTML = `<span class="truncate" title="${cellValue}">${cellValue}</span>`;
+          // Rút gọn nếu nội dung quá dài (Ví dụ: Chuỗi Vector)
+          if (typeof cellValue === 'string' && cellValue.length > 60) {
+            html += `<td><span class="truncate" title="${cellValue}">${cellValue}</span></td>`;
           } else {
-            td.textContent = cellValue;
+            html += `<td>${cellValue}</td>`;
           }
-          
-          row.appendChild(td);
         });
-        tbody.appendChild(row);
+        html += `</tr>`;
       });
 
-      table.appendChild(tbody);
-      tableContainer.appendChild(table);
-      section.appendChild(tableContainer);
-
-      return section;
+      html += `</tbody></table></div></div>`;
+      return html;
     }
   </script>
 </body>
