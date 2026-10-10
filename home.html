@@ -35,7 +35,7 @@
     }
     iframe { width: 100%; height: 100%; border: none; background: #fff; position: relative; z-index: 2;}
 
-    /* Cụm điều khiển hỗ trợ tai thỏ iPhone (safe-area-inset) */
+    /* Cụm điều khiển nổi - Góc trái (Chỉ còn Menu & Toàn màn hình) */
     .floating-controls {
       position: fixed; 
       top: max(20px, env(safe-area-inset-top)); 
@@ -63,9 +63,6 @@
     
     .float-btn:hover { background: rgba(59, 130, 246, 0.2); border-color: rgba(59, 130, 246, 0.4); transform: translateY(-2px); }
     .float-btn:hover svg { stroke: var(--primary); }
-    
-    .btn-logout-float:hover { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); }
-    .btn-logout-float:hover svg { stroke: var(--danger); }
 
     .overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -74,7 +71,7 @@
     }
     .overlay.show { opacity: 1; visibility: visible; }
 
-    /* Sidebar linh hoạt (Dùng đơn vị % và vw để không vỡ layout) */
+    /* Sidebar linh hoạt */
     .sidebar { 
       position: fixed; top: 0; left: -100%; 
       width: 85%; max-width: 320px; height: 100vh; 
@@ -118,12 +115,28 @@
     .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text-main); transform: translateX(2px); }
     .nav-item.active { background: rgba(59, 130, 246, 0.15); color: var(--primary); font-weight: 600; border: 1px solid rgba(59, 130, 246, 0.2); }
     
+    /* Chân trang Sidebar (Footer) gọn gàng chứa nút Đăng xuất */
     .sidebar-footer {
       padding: 16px 20px; border-top: 1px solid var(--border-glass);
       display: flex; align-items: center; justify-content: space-between;
       background: rgba(0,0,0,0.2);
     }
-    .user-info { font-size: 13px; color: var(--text-main); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px;}
+    .user-info { font-size: 13px; color: var(--text-main); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px;}
+
+    .btn-logout {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(239, 68, 68, 0.1); 
+      border: 1px solid rgba(239, 68, 68, 0.2); 
+      color: #f87171;
+      padding: 8px 12px; 
+      border-radius: 10px; 
+      font-size: 12px; 
+      font-weight: 600; 
+      cursor: pointer; 
+      transition: 0.2s;
+    }
+    .btn-logout svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .btn-logout:hover { background: var(--danger); color: #fff; transform: translateY(-1px);}
 
     .loading-text { padding: 30px; text-align: center; color: var(--text-muted); font-size: 13px; }
 
@@ -158,6 +171,7 @@
 </head>
 <body>
 
+  <!-- NÚT NỔI Ở MÀN HÌNH CHÍNH (GỌN GÀNG) -->
   <div class="floating-controls">
     <button class="float-btn" onclick="openSidebar()" title="Mở menu">
       <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -169,6 +183,7 @@
 
   <div class="overlay" id="pageOverlay" onclick="closeSidebar()"></div>
 
+  <!-- Thanh Sidebar menu -->
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="header-top">
@@ -180,14 +195,16 @@
         <button class="btn-action btn-refresh" onclick="fetchData()">↻ Làm mới</button>
       </div>
     </div>
+    
     <ul class="nav-list" id="navList">
       <li class="loading-text">Đang tải dữ liệu...</li>
     </ul>
     
+    <!-- FOOTER MENU CHỨA THÔNG TIN TÀI KHOẢN VÀ NÚT ĐĂNG XUẤT NHỎ GỌN -->
     <div class="sidebar-footer" id="sidebarFooter">
       <span class="user-info" id="userDisplay">Tài khoản</span>
-      <button class="float-btn btn-logout-float" onclick="handleLogout()" style="padding: 6px 12px; font-size: 12px; gap:5px; box-shadow:none;">
-        <svg viewBox="0 0 24 24" style="width: 16px; height:16px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14l5-5-5-5m5 5H9"/></svg>
+      <button class="btn-logout" onclick="handleLogout()" title="Đăng xuất khỏi hệ thống">
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14l5-5-5-5m5 5H9"/></svg>
         Thoát
       </button>
     </div>
@@ -222,15 +239,16 @@
         return;
       }
       
-      document.getElementById("userDisplay").textContent = currentUser;
+      document.getElementById("userDisplay").textContent = "👤 " + currentUser;
       openSidebar();
       fetchData();
     });
 
+    // Hàm gọi chức năng Đăng xuất
     function handleLogout() {
-      if (confirm("Bạn có chắc chắn muốn đăng xuất không?")) {
+      if (confirm("Bạn có chắc chắn muốn đăng xuất tài khoản không?")) {
         localStorage.removeItem("currentUser");
-        window.location.href = "index.html";
+        window.location.href = "index.html"; // Trả về trang đăng nhập
       }
     }
 
