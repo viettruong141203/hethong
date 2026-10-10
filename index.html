@@ -6,8 +6,8 @@
   <title>Đăng Nhập & Đăng Ký - Hệ Thống</title>
   <style>
     :root {
-      --bg-glass: rgba(18, 20, 26, 0.92);
-      --border-glass: rgba(255, 255, 255, 0.08);
+      --bg-glass: rgba(18, 20, 26, 0.75);
+      --border-glass: rgba(255, 255, 255, 0.1);
       --primary: #3b82f6;
       --primary-hover: #2563eb;
       --text-main: #f3f4f6;
@@ -21,57 +21,162 @@
       display: flex; 
       justify-content: center; 
       align-items: center; 
-      background-color: #0b0f19; 
+      background-color: #0b0f19;
+      overflow: hidden;
+      position: relative;
     }
 
-    .modal { 
-      background: #151922; 
+    /* Hiệu ứng đốm sáng nền lung linh */
+    body::before, body::after {
+      content: '';
+      position: absolute;
+      width: 350px;
+      height: 350px;
+      border-radius: 50%;
+      filter: blur(80px);
+      z-index: 0;
+      opacity: 0.5;
+    }
+    body::before {
+      background: #3b82f6;
+      top: -100px;
+      left: -100px;
+    }
+    body::after {
+      background: #8b5cf6;
+      bottom: -100px;
+      right: -100px;
+    }
+
+    /* Form kính mờ (Glassmorphism) */
+    .auth-card { 
+      position: relative;
+      z-index: 1;
+      background: var(--bg-glass); 
+      backdrop-filter: blur(20px); 
+      -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--border-glass); 
-      padding: 35px; 
-      border-radius: 20px; 
+      padding: 40px 35px; 
+      border-radius: 24px; 
       width: 90%; 
-      max-width: 380px; 
+      max-width: 400px; 
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); 
       color: var(--text-main);
+      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .modal h3 { margin: 0 0 24px 0; color: #fff; text-align: center; font-size: 20px; font-weight: 600; }
-    .modal label { display: block; margin-bottom: 6px; font-weight: 500; color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;}
-    .modal input { 
-      width: 100%; padding: 12px 16px; margin-bottom: 16px; 
-      background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); 
-      border-radius: 12px; box-sizing: border-box; font-size: 14px; color: #fff; 
-      outline: none; transition: all 0.2s; 
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    .modal input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .auth-header h3 { 
+      margin: 0 0 8px 0; 
+      color: #fff; 
+      font-size: 24px; 
+      font-weight: 700; 
+      letter-spacing: -0.5px; 
+    }
+    .auth-header p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .input-group {
+      margin-bottom: 18px;
+    }
+    .auth-card label { 
+      display: block; 
+      margin-bottom: 8px; 
+      font-weight: 500; 
+      color: var(--text-muted); 
+      font-size: 12px; 
+      text-transform: uppercase; 
+      letter-spacing: 0.8px;
+    }
+    .auth-card input { 
+      width: 100%; 
+      padding: 14px 18px; 
+      background: rgba(255, 255, 255, 0.04); 
+      border: 1px solid var(--border-glass); 
+      border-radius: 14px; 
+      box-sizing: border-box; 
+      font-size: 14px; 
+      color: #fff; 
+      outline: none; 
+      transition: all 0.25s ease; 
+    }
+    .auth-card input:focus { 
+      border-color: var(--primary); 
+      background: rgba(59, 130, 246, 0.05);
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); 
+    }
     
-    .modal-actions { display: flex; gap: 10px; margin-top: 5px;}
-    .btn-save { flex: 1; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s;}
-    .btn-save:hover { background: var(--primary-hover); }
+    .btn-submit { 
+      width: 100%; 
+      padding: 14px; 
+      background: var(--primary); 
+      color: white; 
+      border: none; 
+      border-radius: 14px; 
+      cursor: pointer; 
+      font-weight: 600; 
+      font-size: 15px; 
+      transition: all 0.25s ease; 
+      margin-top: 10px;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.35);
+    }
+    .btn-submit:hover { 
+      background: var(--primary-hover); 
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+    }
     
-    .auth-switch { text-align: center; margin-top: 18px; font-size: 13px; color: var(--text-muted); }
-    .auth-switch a { color: var(--primary); cursor: pointer; text-decoration: none; font-weight: 500; }
-    .auth-switch a:hover { text-decoration: underline; }
+    .auth-switch { 
+      text-align: center; 
+      margin-top: 22px; 
+      font-size: 13px; 
+      color: var(--text-muted); 
+    }
+    .auth-switch a { 
+      color: var(--primary); 
+      cursor: pointer; 
+      text-decoration: none; 
+      font-weight: 600; 
+      transition: color 0.2s;
+    }
+    .auth-switch a:hover { color: #60a5fa; text-decoration: underline; }
   </style>
 </head>
 <body>
 
-  <div class="modal">
-    <h3 id="authTitle">Đăng Nhập</h3>
+  <div class="auth-card">
+    <div class="auth-header">
+      <h3 id="authTitle">Đăng Nhập</h3>
+      <p id="authSubtitle">Chào mừng bạn quay trở lại hệ thống</p>
+    </div>
     
-    <div id="registerFields" style="display: none;">
+    <div id="registerFields" class="input-group" style="display: none;">
       <label>Họ và Tên</label>
-      <input type="text" id="authFullname" placeholder="Nhập họ và tên...">
+      <input type="text" id="authFullname" placeholder="Nhập họ và tên của bạn...">
     </div>
 
-    <label>E-mail tài khoản</label>
-    <input type="text" id="authEmail" placeholder="Nhập email...">
-    
-    <label>Mật khẩu</label>
-    <input type="password" id="authPassword" placeholder="Nhập mật khẩu...">
-    
-    <div class="modal-actions">
-      <button class="btn-save" id="authSubmitBtn" onclick="submitAuth()">Đăng Nhập</button>
+    <div class="input-group">
+      <label>E-mail tài khoản</label>
+      <input type="text" id="authEmail" placeholder="name@example.com">
     </div>
+    
+    <div class="input-group">
+      <label>Mật khẩu</label>
+      <input type="password" id="authPassword" placeholder="••••••••">
+    </div>
+    
+    <button class="btn-submit" id="authSubmitBtn" onclick="submitAuth()">Đăng Nhập</button>
     
     <div class="auth-switch" id="authSwitchText">
       Chưa có tài khoản? <a onclick="switchAuthMode('register')">Đăng ký ngay</a>
@@ -83,7 +188,7 @@
 
     let isRegisterMode = false;
 
-    // Nếu đã đăng nhập rồi thì tự động chuyển hướng thẳng sang home.html
+    // Nếu đã đăng nhập trước đó, tự động đá sang home.html
     if (localStorage.getItem("currentUser")) {
       window.location.href = "home.html";
     }
@@ -91,17 +196,20 @@
     function switchAuthMode(mode) {
       isRegisterMode = (mode === 'register');
       const title = document.getElementById("authTitle");
+      const subtitle = document.getElementById("authSubtitle");
       const btn = document.getElementById("authSubmitBtn");
       const switchText = document.getElementById("authSwitchText");
       const registerFields = document.getElementById("registerFields");
 
       if (isRegisterMode) {
-        title.textContent = "Đăng Ký Tài Khoản";
+        title.textContent = "Tạo Tài Khoản";
+        subtitle.textContent = "Điền thông tin để đăng ký hệ thống mới";
         btn.textContent = "Đăng Ký";
         registerFields.style.display = "block";
         switchText.innerHTML = `Đã có tài khoản? <a onclick="switchAuthMode('login')">Đăng nhập</a>`;
       } else {
         title.textContent = "Đăng Nhập";
+        subtitle.textContent = "Chào mừng bạn quay trở lại hệ thống";
         btn.textContent = "Đăng Nhập";
         registerFields.style.display = "none";
         switchText.innerHTML = `Chưa có tài khoản? <a onclick="switchAuthMode('register')">Đăng ký ngay</a>`;
@@ -169,8 +277,7 @@
 
             if (isValid || (email === "admin" && password === "123456")) {
               localStorage.setItem("currentUser", email);
-              alert("Đăng nhập thành công!");
-              window.location.href = "home.html"; // Chuyển hướng sang Trang chủ
+              window.location.href = "home.html";
             } else {
               alert("Sai E-mail hoặc Mật khẩu!");
             }
