@@ -10,7 +10,7 @@ const DataManager = {
     return cached ? JSON.parse(cached) : null;
   },
 
-  // Gọi trực tiếp (Chỉ dùng khi Đăng nhập)
+  // Gọi trực tiếp (Dành riêng cho xác thực lúc Đăng nhập)
   async get(sheetName) {
     try {
       const payload = { "sheet": sheetName, "action": "get" };
@@ -38,35 +38,39 @@ const DataManager = {
     }
   },
 
-  // Gửi lệnh get_multiple lấy 3 bảng cùng lúc
+  // CHẠY SONG SONG 3 BẢNG CÙNG LÚC
   async syncMultipleSheets() {
     try {
-      const payload = { 
-        "action": "get_multiple", 
-        "sheets": ["Home", "Face ID", "Ngân hàng"] 
-      };
-      
-      const response = await fetch(SCRIPT_URL, {
-        method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload)
-      });
-      const result = await response.json();
-      
-      if (result.status === "success") {
-        const sheetsData = result.data || result;
-        // Lưu vĩnh viễn dữ liệu của từng bảng vào máy
-        ["Home", "Face ID", "Ngân hàng"].forEach(sheet => {
-          if (sheetsData[sheet]) {
-            localStorage.setItem("app_data_" + sheet, JSON.stringify(sheetsData[sheet]));
-          }
+      const sheetsToFetch = ["Home", "Face ID", "Ngân hàng"];
+      const sheetsData = {};
+
+      // Tạo 3 luồng gọi API độc lập chạy cùng lúc
+      const promises = sheetsToFetch.map(async (sheet) => {
+        const payload = { "sheet": sheet, "action": "get" };
+        const response = await fetch(SCRIPT_URL, {
+          method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
         });
-        return sheetsData; 
-      }
-    } catch (error) { console.error("Lỗi đồng bộ ngầm:", error); }
-    return null;
+        const result = await response.json();
+        
+        // Nếu lấy thành công, lập tức lưu vĩnh viễn vào máy
+        if (result.status === "success" && result.all_data) {
+          sheetsData[sheet] = result.all_data;
+          localStorage.setItem("app_data_" + sheet, JSON.stringify(result.all_data));
+        }
+      });
+
+      // Chờ cả 3 luồng chạy xong
+      await Promise.all(promises);
+      return sheetsData;
+      
+    } catch (error) { 
+      console.error("Lỗi đồng bộ ngầm:", error); 
+      return null;
+    }
   },
 
-  // Kích hoạt cỗ máy chạy ngầm 2s/lần
+  // CỖ MÁY CHẠY NGẦM LIÊN TỤC 3 GIÂY/LẦN
   startBackgroundWorker(callbackHome) {
     isSyncing = true;
 
@@ -80,16 +84,16 @@ const DataManager = {
       // Gọi API lấy dữ liệu mới
       const sheetsData = await this.syncMultipleSheets();
       
-      // Nếu có dữ liệu mới của Home, báo cho giao diện cập nhật
+      // Báo cho trang chủ cập nhật nếu có dữ liệu Home mới
       if (sheetsData && sheetsData["Home"] && callbackHome) {
         callbackHome(sheetsData["Home"]);
       }
 
-      // Đợi đúng 2s mới chạy tiếp vòng lặp
-      if (isSyncing) syncTimeout = setTimeout(loop, 2000);
+      // Đợi đúng 3 giây (3000ms) rồi gọi lại vòng lặp
+      if (isSyncing) syncTimeout = setTimeout(loop, 3000);
     };
     
-    loop();
+    loop(); // Bắt đầu khởi động
   },
 
   // Hủy chạy ngầm và xóa bộ nhớ
