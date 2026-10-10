@@ -3,225 +3,82 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Trang Chủ - Trình Duyệt Web Cao Cấp</title>
+  <title>Trang Chủ - Hệ Thống Trình Duyệt</title>
   <style>
-    :root {
-      --bg-glass: rgba(18, 20, 26, 0.95);
-      --border-glass: rgba(255, 255, 255, 0.08);
-      --primary: #3b82f6;
-      --primary-hover: #2563eb;
-      --danger: #ef4444;
-      --text-main: #f3f4f6;
-      --text-muted: #9ca3af;
-      --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
-    }
-    
-    body { 
-      margin: 0; 
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-      height: 100vh;
-      height: 100dvh; /* Tối ưu cho thiết bị di động, không bị thanh URL che khuất */
-      overflow: hidden; 
-      background-color: #0b0f19; 
-    }
-    
-    .iframe-container { 
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-      z-index: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--text-muted); 
-    }
-    .iframe-container span.placeholder { 
-      font-size: 14px; font-weight: 400; opacity: 0.8; 
-      background: rgba(255, 255, 255, 0.03); padding: 12px 20px; border-radius: 30px; 
-      border: 1px solid var(--border-glass); backdrop-filter: blur(8px); text-align: center; margin: 0 20px;
-    }
+    :root { --bg-glass: rgba(18, 20, 26, 0.95); --border-glass: rgba(255, 255, 255, 0.08); --primary: #3b82f6; --danger: #ef4444; --text-main: #f3f4f6; --text-muted: #9ca3af; --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5); }
+    body { margin: 0; font-family: system-ui, sans-serif; height: 100vh; height: 100dvh; overflow: hidden; background-color: #0b0f19; }
+    .iframe-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--text-muted); }
+    .iframe-container span.placeholder { font-size: 14px; background: rgba(255, 255, 255, 0.03); padding: 12px 20px; border-radius: 30px; border: 1px solid var(--border-glass); backdrop-filter: blur(8px); text-align: center; margin: 0 20px;}
     iframe { width: 100%; height: 100%; border: none; background: #fff; position: relative; z-index: 2;}
-
-    /* Cụm điều khiển nổi - Góc trái */
-    .floating-controls {
-      position: fixed; 
-      top: max(20px, env(safe-area-inset-top)); 
-      left: max(20px, env(safe-area-inset-left)); 
-      z-index: 100;
-      display: flex; gap: 10px; align-items: center;
-    }
-
-    .float-btn {
-      background: rgba(18, 20, 26, 0.6); 
-      border: 1px solid var(--border-glass);
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-      padding: 10px; border-radius: 12px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .float-btn svg {
-      width: 20px; height: 20px;
-      fill: none; stroke: var(--text-main);
-      stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
-      transition: transform 0.2s ease, stroke 0.2s ease;
-    }
-    
+    .floating-controls { position: fixed; top: max(20px, env(safe-area-inset-top)); left: max(20px, env(safe-area-inset-left)); z-index: 100; display: flex; gap: 10px;}
+    .float-btn { background: rgba(18, 20, 26, 0.6); border: 1px solid var(--border-glass); backdrop-filter: blur(12px); padding: 10px; border-radius: 12px; cursor: pointer; display: flex; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: 0.3s; }
+    .float-btn svg { width: 20px; height: 20px; stroke: var(--text-main); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; fill: none;}
     .float-btn:hover { background: rgba(59, 130, 246, 0.2); border-color: rgba(59, 130, 246, 0.4); transform: translateY(-2px); }
     .float-btn:hover svg { stroke: var(--primary); }
-
-    .overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(3, 7, 18, 0.6); backdrop-filter: blur(4px);
-      z-index: 101; opacity: 0; visibility: hidden; transition: all 0.3s ease;
-    }
+    .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 7, 18, 0.6); backdrop-filter: blur(4px); z-index: 101; opacity: 0; visibility: hidden; transition: 0.3s; }
     .overlay.show { opacity: 1; visibility: visible; }
-
-    /* Sidebar linh hoạt */
-    .sidebar { 
-      position: fixed; top: 0; left: -100%; 
-      width: 85%; max-width: 320px; 
-      height: 100vh; height: 100dvh; 
-      background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border-right: 1px solid var(--border-glass);
-      color: var(--text-main); display: flex; flex-direction: column; z-index: 102;
-      box-shadow: var(--shadow); transition: left 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-      padding-top: env(safe-area-inset-top);
-      padding-bottom: env(safe-area-inset-bottom);
-      box-sizing: border-box;
-    }
+    .sidebar { position: fixed; top: 0; left: -100%; width: 85%; max-width: 320px; height: 100dvh; background: var(--bg-glass); backdrop-filter: blur(20px); border-right: 1px solid var(--border-glass); color: var(--text-main); display: flex; flex-direction: column; z-index: 102; box-shadow: var(--shadow); transition: left 0.35s; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); box-sizing: border-box; }
     .sidebar.open { left: 0; }
-
-    .sidebar-header { padding: 20px 20px 16px; display: flex; flex-direction: column; gap: 16px; border-bottom: 1px solid var(--border-glass); }
+    .sidebar-header { padding: 20px; display: flex; flex-direction: column; gap: 16px; border-bottom: 1px solid var(--border-glass); }
     .header-top { display: flex; justify-content: space-between; align-items: center; }
-    .header-top h3 { margin: 0; font-size: 16px; font-weight: 600; color: #fff; }
-    
-    .close-btn { 
-      background: rgba(255,255,255,0.05); border: none; color: var(--text-muted); 
-      width: 30px; height: 30px; border-radius: 50%; font-size: 14px; 
-      display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; 
-    }
+    .header-top h3 { margin: 0; font-size: 16px; }
+    .close-btn { background: rgba(255,255,255,0.05); border: none; color: var(--text-muted); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
     .close-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
-
-    .action-buttons { display: flex; gap: 10px; }
-    .btn-action { 
-      flex: 1; padding: 10px; border: 1px solid var(--border-glass); border-radius: 10px; 
-      font-size: 13px; font-weight: 500; cursor: pointer; color: var(--text-main); transition: 0.2s; 
-      display: flex; align-items: center; justify-content: center;
-    }
-    .btn-add { background: var(--primary); border-color: transparent; font-weight: 600; }
-    .btn-add:hover { background: var(--primary-hover); }
-    
+    .btn-add { padding: 10px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; color: #fff; background: var(--primary); border: none; transition: 0.2s; text-align: center;}
+    .btn-add:hover { background: #2563eb; }
     .nav-list { list-style: none; padding: 12px; margin: 0; overflow-y: auto; flex: 1; }
-    .nav-item { 
-      padding: 12px 14px; margin: 4px 0; border-radius: 10px;
-      cursor: pointer; transition: all 0.2s ease; font-size: 14px; font-weight: 400;
-      color: var(--text-muted); display: flex; align-items: center; gap: 10px;
-      word-break: break-word;
-    }
-    .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text-main); transform: translateX(2px); }
+    .nav-item { padding: 12px 14px; margin: 4px 0; border-radius: 10px; cursor: pointer; transition: 0.2s; font-size: 14px; color: var(--text-muted); display: flex; align-items: center; word-break: break-word; }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text-main); }
     .nav-item.active { background: rgba(59, 130, 246, 0.15); color: var(--primary); font-weight: 600; border: 1px solid rgba(59, 130, 246, 0.2); }
-    
-    /* CHÂN TRANG ĐƯỢC TỐI ƯU - ĐẢM BẢO KHÔNG BỊ TRÀN VIỀN */
-    .sidebar-footer {
-      padding: 16px 15px; 
-      border-top: 1px solid var(--border-glass);
-      display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      background: rgba(0,0,0,0.2);
-      width: 100%;
-      box-sizing: border-box; /* Rất quan trọng để không bị vượt quá chiều ngang */
-    }
-    
-    .user-info { 
-      font-size: 13px; color: var(--text-main); font-weight: 500; 
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
-      flex: 1; /* Tự động thu hẹp nếu màn hình quá nhỏ */
-    }
-
-    .btn-logout {
-      flex-shrink: 0; /* Ngăn chặn nút đăng xuất bị bóp méo hoặc đẩy ra ngoài */
-      display: flex; align-items: center; gap: 6px;
-      background: rgba(239, 68, 68, 0.1); 
-      border: 1px solid rgba(239, 68, 68, 0.2); 
-      color: #f87171;
-      padding: 8px 12px; 
-      border-radius: 10px; 
-      font-size: 12px; 
-      font-weight: 600; 
-      cursor: pointer; 
-      transition: 0.2s;
-    }
-    .btn-logout svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-    .btn-logout:hover { background: var(--danger); color: #fff; transform: translateY(-1px);}
-
-    .loading-text { padding: 30px; text-align: center; color: var(--text-muted); font-size: 13px; }
-
-    /* Modal Form co giãn */
-    .modal-overlay { 
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-      background: rgba(3, 7, 18, 0.75); backdrop-filter: blur(8px); 
-      display: none; justify-content: center; align-items: center; z-index: 105; 
-      padding: 20px; box-sizing: border-box;
-    }
-    .modal { 
-      background: #151922; border: 1px solid var(--border-glass); 
-      padding: 25px 20px; border-radius: 20px; width: 100%; max-width: 400px; 
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); color: var(--text-main);
-      box-sizing: border-box;
-    }
-    @media (min-width: 480px) { .modal { padding: 30px; } }
-
-    .modal h3 { margin: 0 0 20px 0; color: #fff; text-align: center; font-size: 18px; font-weight: 600; }
-    .modal label { display: block; margin-bottom: 6px; font-weight: 500; color: var(--text-muted); font-size: 12px; text-transform: uppercase;}
-    .modal input { 
-      width: 100%; padding: 12px 14px; margin-bottom: 16px; 
-      background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-glass); 
-      border-radius: 12px; box-sizing: border-box; font-size: 14px; color: #fff; outline: none; transition: all 0.2s; 
-    }
+    .sidebar-footer { padding: 16px 15px; border-top: 1px solid var(--border-glass); display: flex; align-items: center; justify-content: space-between; gap: 10px; background: rgba(0,0,0,0.2); box-sizing: border-box;}
+    .user-info { font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+    .btn-logout { flex-shrink: 0; display: flex; align-items: center; gap: 6px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #f87171; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    .btn-logout svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2;}
+    .btn-logout:hover { background: var(--danger); color: #fff; }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 7, 18, 0.75); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 105; padding: 20px; box-sizing: border-box; }
+    .modal { background: #151922; border: 1px solid var(--border-glass); padding: 25px 20px; border-radius: 20px; width: 100%; max-width: 400px; box-shadow: 0 25px 50px rgba(0,0,0,0.7); color: var(--text-main); box-sizing: border-box; }
+    .modal h3 { margin: 0 0 20px 0; text-align: center; font-size: 18px; }
+    .modal label { display: block; margin-bottom: 6px; font-size: 12px; color: var(--text-muted); text-transform: uppercase;}
+    .modal input { width: 100%; padding: 12px 14px; margin-bottom: 16px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass); border-radius: 12px; box-sizing: border-box; color: #fff; font-size: 14px; outline: none; transition: 0.2s; }
     .modal input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
-    
-    .modal-actions { display: flex; gap: 10px; margin-top: 5px;}
-    .btn-save { flex: 1; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s;}
-    .btn-cancel { flex: 1; padding: 12px; background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid var(--border-glass); border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s;}
+    .modal-actions { display: flex; gap: 10px;}
+    .btn-save, .btn-cancel { flex: 1; padding: 12px; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 14px; border: none; transition: 0.2s; }
+    .btn-save { background: var(--primary); color: white; }
+    .btn-cancel { background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid var(--border-glass); }
   </style>
 </head>
 <body>
 
   <div class="floating-controls">
-    <button class="float-btn" onclick="openSidebar()" title="Mở menu">
-      <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-    </button>
-    <button class="float-btn" onclick="toggleFullScreen()" title="Toàn màn hình">
-      <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-    </button>
+    <button class="float-btn" onclick="openSidebar()" title="Mở menu"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+    <button class="float-btn" onclick="toggleFullScreen()" title="Toàn màn hình"><svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></button>
   </div>
 
   <div class="overlay" id="pageOverlay" onclick="closeSidebar()"></div>
 
-  <!-- Thanh Sidebar menu -->
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="header-top">
         <h3>Danh Sách Trang</h3>
         <button class="close-btn" onclick="closeSidebar()">✕</button>
       </div>
-      <div class="action-buttons">
-        <button class="btn-action btn-add" onclick="openModal()">+ Thêm</button>
-        <button class="btn-action btn-refresh" onclick="fetchData()">↻ Làm mới</button>
-      </div>
+      <button class="btn-add" onclick="openModal()">+ Thêm Trang Mới</button>
     </div>
     
     <ul class="nav-list" id="navList">
-      <li class="loading-text">Đang tải dữ liệu...</li>
+      <li style="padding: 20px; text-align: center; color: #9ca3af; font-size: 13px;">Đang tải dữ liệu...</li>
     </ul>
     
-    <!-- FOOTER MENU CHỨA THÔNG TIN TÀI KHOẢN VÀ NÚT ĐĂNG XUẤT -->
-    <div class="sidebar-footer" id="sidebarFooter">
+    <div class="sidebar-footer">
       <span class="user-info" id="userDisplay">Tài khoản</span>
-      <button class="btn-logout" onclick="handleLogout()" title="Đăng xuất khỏi hệ thống">
-        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14l5-5-5-5m5 5H9"/></svg>
-        Thoát
+      <button class="btn-logout" onclick="handleLogout()">
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14l5-5-5-5m5 5H9"/></svg> Thoát
       </button>
     </div>
   </div>
 
-  <div class="iframe-container" id="containerScreen">
-    <span class="placeholder">Bấm vào biểu tượng ☰ để mở danh sách chọn trang</span>
+  <div class="iframe-container">
+    <span class="placeholder">Bấm vào biểu tượng ☰ để mở danh sách trang</span>
     <iframe id="contentFrame" src="" allowfullscreen style="display: none;"></iframe>
   </div>
 
@@ -239,147 +96,79 @@
     </div>
   </div>
 
+  <script src="data.js"></script>
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzU2-uP0jUUia8w74BBQ7U78OUn3d_SE7cEd_LBZJbq2b2g4HCJyFRAOLKMU9p2zb0F/exec"; 
-
     document.addEventListener("DOMContentLoaded", () => {
       const currentUser = localStorage.getItem("currentUser");
-      if (!currentUser) {
-        window.location.href = "index.html"; 
-        return;
-      }
+      if (!currentUser) return window.location.href = "index.html"; 
       
       document.getElementById("userDisplay").textContent = "👤 " + currentUser;
       openSidebar();
-      fetchData();
+      
+      // Khởi chạy vòng lặp ngầm
+      DataManager.startBackgroundWorker((data) => {
+        const pages = [];
+        data.forEach(item => {
+          if (item.row !== 1 && item.A && item.B) pages.push({ name: item.A, url: item.B }); 
+        });
+        renderNavigation(pages);
+      });
     });
 
-    // Hàm gọi chức năng Đăng xuất
     function handleLogout() {
-      if (confirm("Bạn có chắc chắn muốn đăng xuất tài khoản không?")) {
-        localStorage.removeItem("currentUser");
-        window.location.href = "index.html"; // Trả về trang đăng nhập
+      if (confirm("Đăng xuất tài khoản?")) {
+        DataManager.stopBackgroundWorker();
+        DataManager.clearCache();
+        window.location.href = "index.html";
       }
     }
 
     function toggleFullScreen() {
-      const elem = document.documentElement;
-      if (!document.fullscreenElement) {
-        if (elem.requestFullscreen) elem.requestFullscreen();
-        else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
-        else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
-      } else {
-        if (document.exitFullscreen) document.exitFullscreen();
-        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-        else if (document.msExitFullscreen) document.msExitFullscreen();
-      }
+      const doc = document.documentElement;
+      if (!document.fullscreenElement) doc.requestFullscreen?.() || doc.webkitRequestFullscreen?.();
+      else document.exitFullscreen?.() || document.webkitExitFullscreen?.();
     }
-
-    function openSidebar() {
-      document.getElementById("sidebar").classList.add("open");
-      document.getElementById("pageOverlay").classList.add("show");
-    }
-
-    function closeSidebar() {
-      document.getElementById("sidebar").classList.remove("open");
-      document.getElementById("pageOverlay").classList.remove("show");
-    }
-
-    function openModal() {
-      document.getElementById("newName").value = "";
-      document.getElementById("newUrl").value = "";
-      document.getElementById("addModal").style.display = "flex";
-      closeSidebar(); 
-    }
-
-    function closeModal() {
-      document.getElementById("addModal").style.display = "none";
-    }
-
-    async function fetchData() {
-      const navList = document.getElementById("navList");
-      navList.innerHTML = "<li class='loading-text'>Đang đồng bộ dữ liệu...</li>";
-      
-      try {
-        const payload = { "sheet": "Home", "action": "get" };
-        const response = await fetch(SCRIPT_URL, {
-            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload), redirect: "follow"
-        });
-        const data = await response.json();
-        
-        if (data.status !== "success") {
-          navList.innerHTML = `<li class='loading-text' style='color:#ef4444;'>Lỗi: ${data.message || 'Không xác định'}</li>`;
-          return;
-        }
-        
-        const pages = [];
-        if (data.all_data && Array.isArray(data.all_data)) {
-          data.all_data.forEach(item => {
-            if (item.row !== 1 && item.A && item.B) { pages.push({ name: item.A, url: item.B }); }
-          });
-        }
-        
-        renderNavigation(pages);
-      } catch (error) {
-        navList.innerHTML = "<li class='loading-text' style='color:#ef4444;'>Lỗi kết nối mạng.</li>";
-      }
-    }
+    
+    function openSidebar() { document.getElementById("sidebar").classList.add("open"); document.getElementById("pageOverlay").classList.add("show"); }
+    function closeSidebar() { document.getElementById("sidebar").classList.remove("open"); document.getElementById("pageOverlay").classList.remove("show"); }
+    function openModal() { document.getElementById("newName").value = ""; document.getElementById("newUrl").value = ""; document.getElementById("addModal").style.display = "flex"; closeSidebar(); }
+    function closeModal() { document.getElementById("addModal").style.display = "none"; }
 
     function renderNavigation(pages) {
       const navList = document.getElementById("navList");
+      const currentActive = document.querySelector(".nav-item.active")?.textContent;
       navList.innerHTML = ""; 
-      if(pages.length === 0) {
-         navList.innerHTML = "<li class='loading-text'>Chưa có trang nào</li>";
-         return;
-      }
+      
+      if(pages.length === 0) return navList.innerHTML = "<li style='text-align:center;color:#9ca3af;padding:20px;'>Chưa có trang nào</li>";
+
       pages.forEach(page => {
         const li = document.createElement("li");
         li.className = "nav-item";
+        if (page.name === currentActive) li.classList.add("active");
         li.textContent = page.name;
-        li.onclick = () => loadWebPage(page.url, li);
+        li.onclick = () => {
+          document.querySelectorAll(".nav-item").forEach(i => i.classList.remove("active"));
+          li.classList.add("active");
+          document.querySelector(".placeholder").style.display = "none";
+          const iframe = document.getElementById("contentFrame");
+          iframe.src = page.url; iframe.style.display = "block";
+          closeSidebar();
+        };
         navList.appendChild(li);
       });
     }
 
-    function loadWebPage(url, element) {
-      document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
-      element.classList.add("active");
-      
-      const iframe = document.getElementById("contentFrame");
-      document.querySelector(".placeholder").style.display = "none";
-      iframe.src = url;
-      iframe.style.display = "block";
-      
-      closeSidebar(); 
-    }
-
     async function saveData() {
-      const name = document.getElementById("newName").value.trim();
-      const url = document.getElementById("newUrl").value.trim();
+      const name = document.getElementById("newName").value.trim(), url = document.getElementById("newUrl").value.trim();
       const btnSave = document.getElementById("btnSave");
-
-      if (!name || !url) return alert("Vui lòng điền đầy đủ thông tin!");
+      if (!name || !url) return alert("Điền đủ thông tin!");
       btnSave.textContent = "Đang lưu..."; btnSave.disabled = true;
 
-      try {
-        const payload = { "sheet": "Home", "action": "add", "A": name, "B": url };
-        const response = await fetch(SCRIPT_URL, {
-          method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload), redirect: "follow"
-        });
-        const result = await response.json();
-        
-        if (result.status === "success" || result.message === "Thành công") {
-          closeModal();
-          openSidebar();
-          fetchData(); 
-        } else {
-          alert("Lỗi máy chủ: " + (result.message || "Không xác định"));
-        }
-      } catch (error) {
-        alert("Lỗi kết nối. Xin hãy thử lại!");
-      } finally {
-        btnSave.textContent = "Lưu lại"; btnSave.disabled = false;
-      }
+      const res = await DataManager.add("Home", { "A": name, "B": url });
+      if (res.success) { closeModal(); openSidebar(); }
+      else alert("Lỗi: " + res.message);
+      
+      btnSave.textContent = "Lưu lại"; btnSave.disabled = false;
     }
   </script>
 </body>
