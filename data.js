@@ -5,81 +5,84 @@ let isSyncing = false;
 let syncTimeout = null;
 
 const DataManager = {
-  // Lấy dữ liệu 1 lần
+  // 1. Lấy dữ liệu "LƯU TRỮ MÃI MÃI" trên máy (Tốc độ 0 giây)
+  getOffline(sheetName) {
+    const cached = localStorage.getItem("app_data_" + sheetName);
+    return cached ? JSON.parse(cached) : null;
+  },
+
+  // 2. Gọi API để lấy dữ liệu từ Google Sheets
   async get(sheetName) {
     try {
       const payload = { "sheet": sheetName, "action": "get" };
       const response = await fetch(SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload),
-        redirect: "follow"
+        method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload), redirect: "follow"
       });
       const data = await response.json();
       
       if (data.status === "success" && data.all_data) {
+        // LƯU MÃI MÃI vào máy mỗi khi gọi API thành công
+        localStorage.setItem("app_data_" + sheetName, JSON.stringify(data.all_data));
         return data.all_data;
       }
       return null;
     } catch (error) {
-      console.error("Lỗi lấy dữ liệu API:", error);
+      console.error("Lỗi API:", error);
       return null;
     }
   },
 
-  // Thêm dữ liệu mới
+  // 3. Thêm dữ liệu lên Sheets
   async add(sheetName, dataObj) {
     try {
       const payload = { "sheet": sheetName, "action": "add", ...dataObj };
       const response = await fetch(SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload),
-        redirect: "follow"
+        method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload), redirect: "follow"
       });
       const result = await response.json();
-      
-      if (result.status === "success" || result.message === "Thành công") {
-        return { success: true };
-      }
-      return { success: false, message: result.message || "Không xác định" };
+      return { success: (result.status === "success" || result.message === "Thành công") };
     } catch (error) {
       return { success: false, message: "Lỗi kết nối mạng" };
     }
   },
 
-  // KHỞI ĐỘNG VÒNG LẶP CHẠY NGẦM LIÊN TỤC
+  // 4. VÒNG LẶP CHẠY NGẦM & KẾT HỢP BỘ NHỚ LƯU MÃI
   startAutoSync(sheetName, intervalMs, callback) {
     isSyncing = true;
-    console.log(`[AutoSync] Bắt đầu gọi API mỗi ${intervalMs/1000} giây...`);
+    
+    // BƯỚC 1: Hiện ngay lập tức dữ liệu đã "Lưu mãi mãi" ra màn hình (Không cần chờ mạng)
+    const offlineData = this.getOffline(sheetName);
+    if (offlineData) {
+      callback(offlineData);
+    }
 
+    // BƯỚC 2: Chạy API ngầm sau lưng 2s/lần để xem có ai thêm web mới không
     const loop = async () => {
-      if (!isSyncing) return; // Dừng lại nếu người dùng đã đăng xuất
+      if (!isSyncing) return;
       
-      const data = await this.get(sheetName);
-      
-      // Gửi dữ liệu về giao diện mà không làm mới trang
-      if (data && isSyncing) {
-        callback(data);
+      const liveData = await this.get(sheetName); 
+      if (liveData && isSyncing) {
+        // Nếu trên Google Sheets có dữ liệu mới, tự động đẩy ra giao diện
+        callback(liveData); 
       }
 
-      // Đợi đúng khoảng thời gian (2s) sau khi tải XONG mới gọi tiếp
-      // Chống quá tải và treo trình duyệt nếu mạng chậm
-      if (isSyncing) {
-        syncTimeout = setTimeout(loop, intervalMs);
-      }
+      // Đợi 2 giây sau mới gọi tiếp vòng lặp
+      if (isSyncing) syncTimeout = setTimeout(loop, intervalMs);
     };
     
-    loop(); // Kích hoạt chạy lần đầu tiên
+    loop(); // Bắt đầu khởi động vòng lặp
   },
 
-  // DỪNG CHẠY NGẦM KHI ĐĂNG XUẤT
+  // Dừng vòng lặp (khi đăng xuất)
   stopAutoSync() {
     isSyncing = false;
-    if (syncTimeout) {
-      clearTimeout(syncTimeout);
-      syncTimeout = null;
-    }
-    console.log("[AutoSync] Đã dừng chạy ngầm.");
+    if (syncTimeout) clearTimeout(syncTimeout);
+  },
+  
+  // Xóa bộ nhớ mãi mãi khi đăng xuất
+  clearCache() {
+    localStorage.clear();
   }
 };
