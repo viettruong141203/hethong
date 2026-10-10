@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Trình Kiểm Tra Bộ Nhớ - Hệ Thống</title>
+  <style>
+    :root {
+      --bg-glass: rgba(18, 20, 26, 0.75);
+      --border-glass: rgba(255, 255, 255, 0.1);
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+    }
+    
+    body { 
+      margin: 0; 
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+      min-height: 100vh; 
+      background-color: #0b0f19;
+      color: var(--text-main);
+      padding: 20px;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    /* Đốm sáng nền */
+    body::before, body::after {
+      content: ''; position: fixed; width: 400px; height: 400px;
+      border-radius: 50%; filter: blur(100px); z-index: -1; opacity: 0.4;
+    }
+    body::before { background: #3b82f6; top: -10%; left: -10%; }
+    body::after { background: #8b5cf6; bottom: -10%; right: -10%; }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--bg-glass);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-glass);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-glass); padding-bottom: 20px; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;}
+    .header h2 { margin: 0; font-size: 22px; }
+    
+    .btn-group { display: flex; gap: 10px; }
+    .btn { 
+      padding: 10px 16px; border-radius: 10px; border: none; 
+      font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; color: #fff;
+    }
+    .btn-refresh { background: var(--primary); }
+    .btn-refresh:hover { background: var(--primary-hover); }
+    .btn-clear { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .btn-clear:hover { background: var(--danger); color: #fff; }
+
+    .storage-section { margin-bottom: 40px; }
+    .storage-title { font-size: 16px; color: var(--primary); font-weight: 600; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between;}
+    
+    .data-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-glass);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 10px;
+      transition: 0.2s;
+    }
+    .data-card:hover { border-color: rgba(255,255,255,0.2); }
+    
+    .data-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .data-key { font-weight: 600; font-size: 14px; color: #fff; word-break: break-all;}
+    .data-size { font-size: 12px; color: var(--text-muted); background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 20px;}
+    
+    .data-value {
+      background: rgba(0,0,0,0.3);
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: monospace;
+      color: #a7f3d0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 200px;
+      overflow-y: auto;
+      margin: 0;
+    }
+
+    .empty-state { text-align: center; color: var(--text-muted); font-style: italic; padding: 20px; font-size: 14px;}
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h2>🛠 Trình Giám Sát Bộ Nhớ</h2>
+      <div class="btn-group">
+        <button class="btn btn-refresh" onclick="loadStorageData()">↻ Tải lại ngay</button>
+        <button class="btn btn-clear" onclick="clearAllStorage()">🗑 Xóa tất cả bộ nhớ</button>
+      </div>
+    </div>
+
+    <!-- Khu vực 1: Session Storage (Dữ liệu cache tải từ API) -->
+    <div class="storage-section">
+      <div class="storage-title">
+        📦 Session Storage (Bộ nhớ tạm 2 giây - Dữ liệu Google Sheets)
+      </div>
+      <div id="sessionContainer"></div>
+    </div>
+
+    <!-- Khu vực 2: Local Storage (Dữ liệu vĩnh viễn, lưu thông tin đăng nhập) -->
+    <div class="storage-section">
+      <div class="storage-title">
+        🔒 Local Storage (Bộ nhớ vĩnh viễn - Phiên đăng nhập)
+      </div>
+      <div id="localContainer"></div>
+    </div>
+  </div>
+
+  <script>
+    // Gọi tải dữ liệu khi trang vừa mở
+    document.addEventListener("DOMContentLoaded", () => {
+      loadStorageData();
+      
+      // Thiết lập làm mới tự động mỗi 1 giây để xem API ngầm có cập nhật gì không
+      setInterval(loadStorageData, 1000); 
+    });
+
+    function loadStorageData() {
+      renderStorage("sessionStorage", document.getElementById("sessionContainer"));
+      renderStorage("localStorage", document.getElementById("localContainer"));
+    }
+
+    function renderStorage(storageType, container) {
+      container.innerHTML = "";
+      const storage = window[storageType];
+      
+      if (storage.length === 0) {
+        container.innerHTML = `<div class="empty-state">Bộ nhớ đang trống.</div>`;
+        return;
+      }
+
+      for (let i = 0; i < storage.length; i++) {
+        const key = storage.key(i);
+        const value = storage.getItem(key);
+        
+        let displayValue = value;
+        let formattedJSON = false;
+        
+        // Thử format JSON cho đẹp mắt nếu dữ liệu là dạng JSON (như danh sách trang)
+        try {
+          const parsed = JSON.parse(value);
+          if (typeof parsed === 'object' && parsed !== null) {
+            displayValue = JSON.stringify(parsed, null, 2);
+            formattedJSON = true;
+          }
+        } catch (e) {
+          // Bỏ qua, giữ nguyên văn bản thô
+        }
+
+        // Tính toán kích thước (Tương đối)
+        const sizeInBytes = new Blob([value]).size;
+        let sizeDisplay = sizeInBytes + " Bytes";
+        if (sizeInBytes > 1024) sizeDisplay = (sizeInBytes / 1024).toFixed(2) + " KB";
+
+        // Đặc biệt hiển thị thời gian sống cho bộ nhớ Time
+        if (key.includes("app_cache_time_")) {
+           const timePassed = ((Date.now() - parseInt(value)) / 1000).toFixed(1);
+           displayValue = `Lưu lúc: ${new Date(parseInt(value)).toLocaleTimeString()}\nĐã trôi qua: ${timePassed} giây.`;
+        }
+
+        const card = document.createElement("div");
+        card.className = "data-card";
+        card.innerHTML = `
+          <div class="data-header">
+            <span class="data-key">${key}</span>
+            <span class="data-size">${sizeDisplay}</span>
+          </div>
+          <pre class="data-value">${displayValue}</pre>
+        `;
+        container.appendChild(card);
+      }
+    }
+
+    function clearAllStorage() {
+      if(confirm("Bạn có chắc chắn muốn xóa TOÀN BỘ dữ liệu đăng nhập và bộ nhớ tạm không? Thao tác này sẽ đăng xuất bạn khỏi hệ thống.")) {
+        localStorage.clear();
+        sessionStorage.clear();
+        loadStorageData();
+        alert("Đã xóa sạch bộ nhớ!");
+      }
+    }
+  </script>
+</body>
+</html>
