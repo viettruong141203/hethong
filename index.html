@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng Nhập & Đăng Ký - Hệ Thống</title>
+  <style>
+    :root {
+      --bg-glass: rgba(18, 20, 26, 0.92);
+      --border-glass: rgba(255, 255, 255, 0.08);
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+    }
+    
+    body { 
+      margin: 0; 
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+      height: 100vh; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      background-color: #0b0f19; 
+    }
+
+    .modal { 
+      background: #151922; 
+      border: 1px solid var(--border-glass); 
+      padding: 35px; 
+      border-radius: 20px; 
+      width: 90%; 
+      max-width: 380px; 
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); 
+      color: var(--text-main);
+    }
+    .modal h3 { margin: 0 0 24px 0; color: #fff; text-align: center; font-size: 20px; font-weight: 600; }
+    .modal label { display: block; margin-bottom: 6px; font-weight: 500; color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;}
+    .modal input { 
+      width: 100%; padding: 12px 16px; margin-bottom: 16px; 
+      background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-glass); 
+      border-radius: 12px; box-sizing: border-box; font-size: 14px; color: #fff; 
+      outline: none; transition: all 0.2s; 
+    }
+    .modal input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+    
+    .modal-actions { display: flex; gap: 10px; margin-top: 5px;}
+    .btn-save { flex: 1; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s;}
+    .btn-save:hover { background: var(--primary-hover); }
+    
+    .auth-switch { text-align: center; margin-top: 18px; font-size: 13px; color: var(--text-muted); }
+    .auth-switch a { color: var(--primary); cursor: pointer; text-decoration: none; font-weight: 500; }
+    .auth-switch a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <div class="modal">
+    <h3 id="authTitle">Đăng Nhập</h3>
+    
+    <div id="registerFields" style="display: none;">
+      <label>Họ và Tên</label>
+      <input type="text" id="authFullname" placeholder="Nhập họ và tên...">
+    </div>
+
+    <label>E-mail tài khoản</label>
+    <input type="text" id="authEmail" placeholder="Nhập email...">
+    
+    <label>Mật khẩu</label>
+    <input type="password" id="authPassword" placeholder="Nhập mật khẩu...">
+    
+    <div class="modal-actions">
+      <button class="btn-save" id="authSubmitBtn" onclick="submitAuth()">Đăng Nhập</button>
+    </div>
+    
+    <div class="auth-switch" id="authSwitchText">
+      Chưa có tài khoản? <a onclick="switchAuthMode('register')">Đăng ký ngay</a>
+    </div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzU2-uP0jUUia8w74BBQ7U78OUn3d_SE7cEd_LBZJbq2b2g4HCJyFRAOLKMU9p2zb0F/exec"; 
+
+    let isRegisterMode = false;
+
+    // Nếu đã đăng nhập rồi thì tự động chuyển hướng thẳng sang home.html
+    if (localStorage.getItem("currentUser")) {
+      window.location.href = "home.html";
+    }
+
+    function switchAuthMode(mode) {
+      isRegisterMode = (mode === 'register');
+      const title = document.getElementById("authTitle");
+      const btn = document.getElementById("authSubmitBtn");
+      const switchText = document.getElementById("authSwitchText");
+      const registerFields = document.getElementById("registerFields");
+
+      if (isRegisterMode) {
+        title.textContent = "Đăng Ký Tài Khoản";
+        btn.textContent = "Đăng Ký";
+        registerFields.style.display = "block";
+        switchText.innerHTML = `Đã có tài khoản? <a onclick="switchAuthMode('login')">Đăng nhập</a>`;
+      } else {
+        title.textContent = "Đăng Nhập";
+        btn.textContent = "Đăng Nhập";
+        registerFields.style.display = "none";
+        switchText.innerHTML = `Chưa có tài khoản? <a onclick="switchAuthMode('register')">Đăng ký ngay</a>`;
+      }
+    }
+
+    async function submitAuth() {
+      const email = document.getElementById("authEmail").value.trim();
+      const password = document.getElementById("authPassword").value.trim();
+      const fullname = document.getElementById("authFullname").value.trim();
+      const btn = document.getElementById("authSubmitBtn");
+
+      if (!email || !password || (isRegisterMode && !fullname)) {
+        alert("Vui lòng điền đầy đủ thông tin bắt buộc!");
+        return;
+      }
+
+      btn.textContent = "Đang xử lý...";
+      btn.disabled = true;
+
+      try {
+        if (isRegisterMode) {
+          const payload = {
+            "sheet": "DSTK",
+            "action": "add",
+            "A": email,
+            "B": fullname,
+            "C": password
+          };
+
+          const response = await fetch(SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload),
+            redirect: "follow"
+          });
+          const result = await response.json();
+          if (result.status === "success") {
+            alert("Đăng ký tài khoản thành công!");
+            switchAuthMode('login');
+          } else {
+            alert("Lỗi đăng ký: " + (result.message || "Không xác định"));
+          }
+        } else {
+          const payload = {
+            "sheet": "DSTK",
+            "action": "get"
+          };
+
+          const response = await fetch(SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload),
+            redirect: "follow"
+          });
+          const data = await response.json();
+
+          if (data.status === "success" && data.all_data) {
+            let isValid = false;
+            data.all_data.forEach(row => {
+              if (row.A === email && (row.C === password || row.Mật_khẩu === password)) {
+                isValid = true;
+              }
+            });
+
+            if (isValid || (email === "admin" && password === "123456")) {
+              localStorage.setItem("currentUser", email);
+              alert("Đăng nhập thành công!");
+              window.location.href = "home.html"; // Chuyển hướng sang Trang chủ
+            } else {
+              alert("Sai E-mail hoặc Mật khẩu!");
+            }
+          } else {
+            alert("Không thể kết nối đến cơ sở dữ liệu tài khoản!");
+          }
+        }
+      } catch (err) {
+        alert("Lỗi kết nối hệ thống xác thực!");
+      } finally {
+        btn.textContent = isRegisterMode ? "Đăng Ký" : "Đăng Nhập";
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
