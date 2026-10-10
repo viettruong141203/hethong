@@ -26,7 +26,7 @@
     <h3 id="aTitle">Đăng Nhập</h3>
     <p id="aSub">Chào mừng bạn quay trở lại</p>
     <div id="rFields" style="display: none;"><label>Họ và Tên</label><input type="text" id="aName"></div>
-    <label>E-mail</label><input type="email" id="aEmail">
+    <label>E-mail (Tài khoản)</label><input type="text" id="aEmail">
     <label>Mật khẩu</label><input type="password" id="aPass">
     <button id="btnSubmit" onclick="doAuth()">Đăng Nhập</button>
     <div class="auth-switch" id="aSwitch">Chưa có tài khoản? <a onclick="toggleMode(true)">Đăng ký</a></div>
@@ -60,7 +60,7 @@
         if(data) {
           const valid = data.find(r => r.A === e && (r.C === p || r.Mật_khẩu === p)) || (e === "admin" && p === "123456");
           if(valid) { localStorage.setItem("currentUser", e); window.location.href = "home.html"; }
-          else alert("Sai E-mail hoặc mật khẩu!");
+          else alert("Sai tài khoản hoặc mật khẩu!");
         } else alert("Lỗi kết nối cơ sở dữ liệu!");
       }
       btn.textContent = isReg ? "Đăng Ký" : "Đăng Nhập"; btn.disabled = false;
