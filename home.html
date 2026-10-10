@@ -19,7 +19,8 @@
     body { 
       margin: 0; 
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-      height: 100vh; 
+      height: 100vh;
+      height: 100dvh; /* Tối ưu cho thiết bị di động, không bị thanh URL che khuất */
       overflow: hidden; 
       background-color: #0b0f19; 
     }
@@ -35,7 +36,7 @@
     }
     iframe { width: 100%; height: 100%; border: none; background: #fff; position: relative; z-index: 2;}
 
-    /* Cụm điều khiển nổi - Góc trái (Chỉ còn Menu & Toàn màn hình) */
+    /* Cụm điều khiển nổi - Góc trái */
     .floating-controls {
       position: fixed; 
       top: max(20px, env(safe-area-inset-top)); 
@@ -74,7 +75,8 @@
     /* Sidebar linh hoạt */
     .sidebar { 
       position: fixed; top: 0; left: -100%; 
-      width: 85%; max-width: 320px; height: 100vh; 
+      width: 85%; max-width: 320px; 
+      height: 100vh; height: 100dvh; 
       background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
       border-right: 1px solid var(--border-glass);
       color: var(--text-main); display: flex; flex-direction: column; z-index: 102;
@@ -115,15 +117,24 @@
     .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text-main); transform: translateX(2px); }
     .nav-item.active { background: rgba(59, 130, 246, 0.15); color: var(--primary); font-weight: 600; border: 1px solid rgba(59, 130, 246, 0.2); }
     
-    /* Chân trang Sidebar (Footer) gọn gàng chứa nút Đăng xuất */
+    /* CHÂN TRANG ĐƯỢC TỐI ƯU - ĐẢM BẢO KHÔNG BỊ TRÀN VIỀN */
     .sidebar-footer {
-      padding: 16px 20px; border-top: 1px solid var(--border-glass);
-      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 15px; 
+      border-top: 1px solid var(--border-glass);
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
       background: rgba(0,0,0,0.2);
+      width: 100%;
+      box-sizing: border-box; /* Rất quan trọng để không bị vượt quá chiều ngang */
     }
-    .user-info { font-size: 13px; color: var(--text-main); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px;}
+    
+    .user-info { 
+      font-size: 13px; color: var(--text-main); font-weight: 500; 
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
+      flex: 1; /* Tự động thu hẹp nếu màn hình quá nhỏ */
+    }
 
     .btn-logout {
+      flex-shrink: 0; /* Ngăn chặn nút đăng xuất bị bóp méo hoặc đẩy ra ngoài */
       display: flex; align-items: center; gap: 6px;
       background: rgba(239, 68, 68, 0.1); 
       border: 1px solid rgba(239, 68, 68, 0.2); 
@@ -171,7 +182,6 @@
 </head>
 <body>
 
-  <!-- NÚT NỔI Ở MÀN HÌNH CHÍNH (GỌN GÀNG) -->
   <div class="floating-controls">
     <button class="float-btn" onclick="openSidebar()" title="Mở menu">
       <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -200,7 +210,7 @@
       <li class="loading-text">Đang tải dữ liệu...</li>
     </ul>
     
-    <!-- FOOTER MENU CHỨA THÔNG TIN TÀI KHOẢN VÀ NÚT ĐĂNG XUẤT NHỎ GỌN -->
+    <!-- FOOTER MENU CHỨA THÔNG TIN TÀI KHOẢN VÀ NÚT ĐĂNG XUẤT -->
     <div class="sidebar-footer" id="sidebarFooter">
       <span class="user-info" id="userDisplay">Tài khoản</span>
       <button class="btn-logout" onclick="handleLogout()" title="Đăng xuất khỏi hệ thống">
