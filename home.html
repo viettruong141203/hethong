@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trang Chủ - Trình Duyệt Web Cao Cấp</title>
+  <title>Trang Chủ</title>
   <style>
     :root {
       --bg-glass: rgba(18, 20, 26, 0.92);
@@ -64,6 +64,15 @@
     }
     .float-btn:hover svg { stroke: var(--primary); }
 
+    /* Nút Đăng xuất nổi - Hiệu ứng đỏ */
+    .btn-logout-float:hover {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: rgba(239, 68, 68, 0.4);
+    }
+    .btn-logout-float:hover svg {
+      stroke: var(--danger);
+    }
+
     .overlay {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(3, 7, 18, 0.6); backdrop-filter: blur(4px);
@@ -117,11 +126,6 @@
       background: rgba(0,0,0,0.2);
     }
     .user-info { font-size: 13px; color: var(--text-main); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px;}
-    .btn-logout {
-      background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #f87171;
-      padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s;
-    }
-    .btn-logout:hover { background: var(--danger); color: #fff; }
 
     .loading-text { padding: 30px; text-align: center; color: var(--text-muted); font-size: 13px; }
 
@@ -154,6 +158,7 @@
 </head>
 <body>
 
+  <!-- Cụm Icon nổi (Thêm nút Đăng xuất ở ngoài cùng) -->
   <div class="floating-controls">
     <button class="float-btn" onclick="openSidebar()" title="Mở menu">
       <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -161,10 +166,14 @@
     <button class="float-btn" onclick="toggleFullScreen()" title="Toàn màn hình">
       <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
     </button>
+    <button class="float-btn btn-logout-float" onclick="handleLogout()" title="Đăng xuất">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14l5-5-5-5m5 5H9"/></svg>
+    </button>
   </div>
 
   <div class="overlay" id="pageOverlay" onclick="closeSidebar()"></div>
 
+  <!-- Thanh Sidebar menu -->
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="header-top">
@@ -179,17 +188,20 @@
     <ul class="nav-list" id="navList">
       <li class="loading-text">Đang tải dữ liệu...</li>
     </ul>
+    
+    <!-- Hiển thị tài khoản ở cuối Menu -->
     <div class="sidebar-footer" id="sidebarFooter">
       <span class="user-info" id="userDisplay">Tài khoản</span>
-      <button class="btn-logout" onclick="handleLogout()">Đăng xuất</button>
     </div>
   </div>
 
+  <!-- Khung iframe hiển thị web -->
   <div class="iframe-container" id="containerScreen">
     <span class="placeholder">Bấm vào biểu tượng ☰ góc trái để chọn trang</span>
     <iframe id="contentFrame" src="" allowfullscreen style="display: none;"></iframe>
   </div>
 
+  <!-- Modal Thêm Mới -->
   <div class="modal-overlay" id="addModal">
     <div class="modal">
       <h3>Thêm Trang Mới</h3>
@@ -207,25 +219,25 @@
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzU2-uP0jUUia8w74BBQ7U78OUn3d_SE7cEd_LBZJbq2b2g4HCJyFRAOLKMU9p2zb0F/exec"; 
 
-    // KIỂM TRA BẢO MẬT: Nếu chưa đăng nhập, tự động chuyển hướng về index.html
+    // Kiểm tra đăng nhập (Bảo mật cơ bản)
     document.addEventListener("DOMContentLoaded", () => {
       const currentUser = localStorage.getItem("currentUser");
       if (!currentUser) {
-        window.location.href = "index.html";
+        window.location.href = "index.html"; // Trả về trang đăng nhập nếu chưa auth
         return;
       }
       
-      // Nếu đã đăng nhập, hiển thị thông tin và load dữ liệu
       document.getElementById("userDisplay").textContent = "👤 " + currentUser;
       openSidebar();
       fetchData();
     });
 
+    // Chức năng Đăng xuất (Có hỏi xác nhận)
     function handleLogout() {
       const confirmLogout = confirm("Bạn có chắc chắn muốn đăng xuất không?");
       if (confirmLogout) {
         localStorage.removeItem("currentUser");
-        window.location.href = "index.html"; // Đá về trang đăng nhập
+        window.location.href = "index.html"; // Trả về trang đăng nhập
       }
     }
 
