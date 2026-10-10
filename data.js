@@ -5,35 +5,80 @@ let isSyncing = false;
 let syncTimeout = null;
 
 const DataManager = {
-  // 1. Lấy dữ liệu "LƯU TRỮ MÃI MÃI" trên máy (Tốc độ 0 giây)
+  // 1. LẤY DỮ LIỆU ĐÃ LƯU VĨNH VIỄN TRÊN MÁY (Tốc độ 0 giây)
   getOffline(sheetName) {
     const cached = localStorage.getItem("app_data_" + sheetName);
     return cached ? JSON.parse(cached) : null;
   },
 
-  // 2. Gọi API để lấy dữ liệu từ Google Sheets
-  async get(sheetName) {
+  // 2. GỌI API LẤY TẤT CẢ CÁC BẢNG CÙNG LÚC VÀ LƯU LẠI
+  async syncMultipleSheets() {
     try {
-      const payload = { "sheet": sheetName, "action": "get" };
+      // Gửi lệnh json yêu cầu lấy 3 sheet
+      const payload = {
+        "action": "get_multiple",
+        "sheets": ["Home", "Face ID", "Ngân hàng"]
+      };
+
       const response = await fetch(SCRIPT_URL, {
-        method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload), redirect: "follow"
+        method: "POST", 
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload), 
+        redirect: "follow"
       });
-      const data = await response.json();
+      const result = await response.json();
       
-      if (data.status === "success" && data.all_data) {
-        // LƯU MÃI MÃI vào máy mỗi khi gọi API thành công
-        localStorage.setItem("app_data_" + sheetName, JSON.stringify(data.all_data));
-        return data.all_data;
+      if (result.status === "success") {
+        // Tách dữ liệu của từng sheet và lưu vĩnh viễn vào localStorage
+        // Hỗ trợ cả trường hợp API trả về trong result.data hoặc trả trực tiếp ngoài result
+        const sheetsData = result.data || result; 
+        
+        ["Home", "Face ID", "Ngân hàng"].forEach(sheet => {
+          if (sheetsData[sheet]) {
+            localStorage.setItem("app_data_" + sheet, JSON.stringify(sheetsData[sheet]));
+          }
+        });
+        return true;
       }
-      return null;
+      return false;
     } catch (error) {
-      console.error("Lỗi API:", error);
-      return null;
+      console.error("Lỗi đồng bộ dữ liệu tổng:", error);
+      return false;
     }
   },
 
-  // 3. Thêm dữ liệu lên Sheets
+  // 3. VÒNG LẶP CHẠY NGẦM CẬP NHẬT TẤT CẢ 2 GIÂY/LẦN
+  // Hàm này giờ không cần truyền sheetName nữa vì nó sẽ đồng bộ tất cả
+  startAutoSync(intervalMs, callbackHome) {
+    isSyncing = true;
+    
+    // BƯỚC 1: Hiển thị ngay lập tức danh sách Home đang có sẵn trong máy
+    const offlineHome = this.getOffline("Home");
+    if (offlineHome && callbackHome) {
+      callbackHome(offlineHome);
+    }
+
+    // BƯỚC 2: Chạy API ngầm sau lưng để xem có dữ liệu mới ở bất kỳ sheet nào không
+    const loop = async () => {
+      if (!isSyncing) return;
+      
+      // Kích hoạt gọi API gộp 3 sheet
+      const success = await this.syncMultipleSheets(); 
+      
+      // Nếu có dữ liệu mới thành công, đẩy ra giao diện cập nhật
+      if (success && isSyncing && callbackHome) {
+        const liveHome = this.getOffline("Home");
+        if (liveHome) callbackHome(liveHome); 
+      }
+
+      // Đợi đúng 2s sau đó lặp lại
+      if (isSyncing) syncTimeout = setTimeout(loop, intervalMs);
+    };
+    
+    loop(); // Bắt đầu vòng lặp
+  },
+
+  // 4. Lệnh thêm mới dữ liệu (giữ nguyên)
   async add(sheetName, dataObj) {
     try {
       const payload = { "sheet": sheetName, "action": "add", ...dataObj };
@@ -48,40 +93,12 @@ const DataManager = {
     }
   },
 
-  // 4. VÒNG LẶP CHẠY NGẦM & KẾT HỢP BỘ NHỚ LƯU MÃI
-  startAutoSync(sheetName, intervalMs, callback) {
-    isSyncing = true;
-    
-    // BƯỚC 1: Hiện ngay lập tức dữ liệu đã "Lưu mãi mãi" ra màn hình (Không cần chờ mạng)
-    const offlineData = this.getOffline(sheetName);
-    if (offlineData) {
-      callback(offlineData);
-    }
-
-    // BƯỚC 2: Chạy API ngầm sau lưng 2s/lần để xem có ai thêm web mới không
-    const loop = async () => {
-      if (!isSyncing) return;
-      
-      const liveData = await this.get(sheetName); 
-      if (liveData && isSyncing) {
-        // Nếu trên Google Sheets có dữ liệu mới, tự động đẩy ra giao diện
-        callback(liveData); 
-      }
-
-      // Đợi 2 giây sau mới gọi tiếp vòng lặp
-      if (isSyncing) syncTimeout = setTimeout(loop, intervalMs);
-    };
-    
-    loop(); // Bắt đầu khởi động vòng lặp
-  },
-
-  // Dừng vòng lặp (khi đăng xuất)
+  // 5. Dừng vòng lặp và xóa bộ nhớ
   stopAutoSync() {
     isSyncing = false;
     if (syncTimeout) clearTimeout(syncTimeout);
   },
   
-  // Xóa bộ nhớ mãi mãi khi đăng xuất
   clearCache() {
     localStorage.clear();
   }
