@@ -12,11 +12,15 @@
     .auth-card { position: relative; z-index: 1; background: var(--bg-glass); backdrop-filter: blur(20px); border: 1px solid var(--border-glass); padding: 40px 30px; border-radius: 24px; width: 100%; max-width: 380px; box-shadow: 0 25px 50px rgba(0,0,0,0.7); color: #fff; box-sizing: border-box;}
     h3 { text-align: center; margin: 0 0 8px 0; font-size: 24px; }
     p { text-align: center; color: var(--text-muted); font-size: 13px; margin: 0 0 25px 0;}
+    .input-group { position: relative; margin-bottom: 18px; }
     label { display: block; margin-bottom: 8px; font-size: 12px; color: var(--text-muted); text-transform: uppercase;}
-    input { width: 100%; padding: 14px; margin-bottom: 18px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass); border-radius: 14px; box-sizing: border-box; color: #fff; font-size: 14px; outline: none; transition: 0.2s;}
+    input { width: 100%; padding: 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass); border-radius: 14px; box-sizing: border-box; color: #fff; font-size: 14px; outline: none; transition: 0.2s;}
     input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+    .toggle-pass { position: absolute; right: 14px; top: 38px; cursor: pointer; color: var(--text-muted); font-size: 12px; font-weight: 600; user-select: none; }
+    .toggle-pass:hover { color: #fff; }
     button { width: 100%; padding: 14px; background: var(--primary); color: #fff; border: none; border-radius: 14px; cursor: pointer; font-weight: 600; font-size: 15px; transition: 0.2s;}
-    button:hover { background: #2563eb; }
+    button:hover:not(:disabled) { background: #2563eb; }
+    button:disabled { opacity: 0.7; cursor: not-allowed; }
     .auth-switch { text-align: center; margin-top: 20px; font-size: 13px; color: var(--text-muted); }
     .auth-switch a { color: var(--primary); cursor: pointer; font-weight: 600; text-decoration: none;}
   </style>
@@ -25,9 +29,25 @@
   <div class="auth-card">
     <h3 id="aTitle">Đăng Nhập</h3>
     <p id="aSub">Chào mừng bạn quay trở lại</p>
-    <div id="rFields" style="display: none;"><label>Họ và Tên</label><input type="text" id="aName"></div>
-    <label>E-mail (Tài khoản)</label><input type="text" id="aEmail">
-    <label>Mật khẩu</label><input type="password" id="aPass">
+    
+    <div id="rFields" style="display: none;">
+      <div class="input-group">
+        <label>Họ và Tên</label>
+        <input type="text" id="aName" placeholder="Nhập họ tên...">
+      </div>
+    </div>
+    
+    <div class="input-group">
+      <label>Tài khoản (E-mail)</label>
+      <input type="text" id="aEmail" placeholder="Nhập tài khoản...">
+    </div>
+    
+    <div class="input-group">
+      <label>Mật khẩu</label>
+      <input type="password" id="aPass" placeholder="Nhập mật khẩu...">
+      <span class="toggle-pass" onclick="togglePassword()">HIỆN</span>
+    </div>
+    
     <button id="btnSubmit" onclick="doAuth()">Đăng Nhập</button>
     <div class="auth-switch" id="aSwitch">Chưa có tài khoản? <a onclick="toggleMode(true)">Đăng ký</a></div>
   </div>
@@ -44,26 +64,77 @@
       document.getElementById("btnSubmit").textContent = isReg ? "Đăng Ký" : "Đăng Nhập";
       document.getElementById("rFields").style.display = isReg ? "block" : "none";
       document.getElementById("aSwitch").innerHTML = isReg ? `Đã có tài khoản? <a onclick="toggleMode(false)">Đăng nhập</a>` : `Chưa có tài khoản? <a onclick="toggleMode(true)">Đăng ký</a>`;
+      
+      document.getElementById("aEmail").value = "";
+      document.getElementById("aPass").value = "";
+      document.getElementById("aName").value = "";
+    }
+
+    function togglePassword() {
+      const passInput = document.getElementById("aPass");
+      const toggleBtn = document.querySelector(".toggle-pass");
+      if (passInput.type === "password") {
+        passInput.type = "text";
+        toggleBtn.textContent = "ẨN";
+      } else {
+        passInput.type = "password";
+        toggleBtn.textContent = "HIỆN";
+      }
     }
 
     async function doAuth() {
-      const e = document.getElementById("aEmail").value.trim(), p = document.getElementById("aPass").value.trim(), n = document.getElementById("aName").value.trim();
+      const e = document.getElementById("aEmail").value.trim();
+      const p = document.getElementById("aPass").value.trim();
+      const n = document.getElementById("aName").value.trim();
       const btn = document.getElementById("btnSubmit");
-      if(!e || !p || (isReg && !n)) return alert("Điền đủ thông tin!");
-      btn.textContent = "Đang xử lý..."; btn.disabled = true;
+      
+      if(!e || !p || (isReg && !n)) return alert("Vui lòng điền đầy đủ thông tin!");
+      
+      btn.textContent = "Đang xử lý..."; 
+      btn.disabled = true;
 
       if (isReg) {
+        // [CHỨC NĂNG MỚI]: BƯỚC 1 - Lấy dữ liệu về để kiểm tra trùng lặp
+        const existingData = await DataManager.get("DSTK");
+        
+        if (existingData) {
+          // Tìm xem có E-mail nào trong cột A giống với E-mail vừa nhập không
+          const isDuplicate = existingData.find(r => r.A === e);
+          
+          if (isDuplicate) {
+            alert("Tài khoản (E-mail) này đã tồn tại! Vui lòng chọn một tài khoản khác.");
+            btn.textContent = "Đăng Ký"; 
+            btn.disabled = false;
+            return; // Dừng tiến trình đăng ký tại đây
+          }
+        }
+
+        // BƯỚC 2 - Nếu không trùng lặp thì tiến hành lưu mới
         const res = await DataManager.add("DSTK", { "A": e, "B": n, "C": p });
-        if(res.success) { alert("Thành công!"); toggleMode(false); } else alert("Lỗi: " + res.message);
+        if(res.success) { 
+          alert("Đăng ký thành công! Vui lòng đăng nhập."); 
+          toggleMode(false); 
+        } else {
+          alert("Lỗi: " + res.message);
+        }
+
       } else {
+        // Chế độ Đăng nhập giữ nguyên
         const data = await DataManager.get("DSTK");
         if(data) {
           const valid = data.find(r => r.A === e && (r.C === p || r.Mật_khẩu === p)) || (e === "admin" && p === "123456");
-          if(valid) { localStorage.setItem("currentUser", e); window.location.href = "home.html"; }
-          else alert("Sai tài khoản hoặc mật khẩu!");
-        } else alert("Lỗi kết nối cơ sở dữ liệu!");
+          if(valid) { 
+            localStorage.setItem("currentUser", e); 
+            window.location.href = "home.html"; 
+          } else {
+            alert("Sai tài khoản hoặc mật khẩu!");
+          }
+        } else {
+          alert("Lỗi kết nối cơ sở dữ liệu!");
+        }
       }
-      btn.textContent = isReg ? "Đăng Ký" : "Đăng Nhập"; btn.disabled = false;
+      btn.textContent = isReg ? "Đăng Ký" : "Đăng Nhập"; 
+      btn.disabled = false;
     }
   </script>
 </body>
