@@ -1,70 +1,264 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>Bảng Dữ Liệu Từ API</title>
-  <style>
-    :root { --bg-glass: rgba(18, 20, 26, 0.85); --border-glass: rgba(255, 255, 255, 0.1); --primary: #3b82f6; --text-main: #f3f4f6; --text-muted: #9ca3af; --table-border: rgba(255, 255, 255, 0.05); }
-    body { margin: 0; font-family: system-ui, sans-serif; min-height: 100vh; background: #0b0f19; color: var(--text-main); padding: 20px; box-sizing: border-box; }
-    body::before, body::after { content: ''; position: fixed; width: 400px; height: 400px; border-radius: 50%; filter: blur(100px); z-index: -1; opacity: 0.3; }
-    body::before { background: #3b82f6; top: -10%; left: -10%; } body::after { background: #8b5cf6; bottom: -10%; right: -10%; }
-    .container { max-width: 1200px; margin: 0 auto; background: var(--bg-glass); backdrop-filter: blur(20px); border: 1px solid var(--border-glass); border-radius: 20px; padding: 25px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); }
-    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-glass); padding-bottom: 20px; margin-bottom: 25px; }
-    .header h2 { margin: 0; font-size: 20px; display: flex; align-items: center; gap: 10px;}
-    .status-dot { width: 12px; height: 12px; background: #10b981; border-radius: 50%; animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0%, 100% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; } }
-    .sheet-section { margin-bottom: 40px; }
-    .sheet-title { font-size: 16px; color: var(--primary); font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid var(--primary); display: inline-block; padding-bottom: 5px;}
-    .table-container { width: 100%; overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid var(--table-border); }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th, td { padding: 12px 16px; border-bottom: 1px solid var(--table-border); white-space: nowrap; text-align: left; }
-    th { background: rgba(255,255,255,0.05); text-transform: uppercase; font-size: 12px; }
-    tr:hover { background: rgba(255,255,255,0.03); }
-    .truncate { max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle;}
-    .empty-state { text-align: center; color: var(--text-muted); font-style: italic; padding: 40px; background: rgba(0,0,0,0.2); border-radius: 12px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Hub - Trình Duyệt Nhúng</title>
+    <!-- Import Google Fonts cho giao diện hiện đại -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* CSS Reset và biến cơ bản */
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --primary-color: #007bff;
+            --hover-color: #0056b3;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* Chiều cao toàn màn hình */
+            overflow: hidden; /* Ẩn cuộn của body vì iframe sẽ chiếm chỗ */
+        }
+
+        /* --- PHẦN GIAO DIỆN CHÍNH (LINK HUB) --- */
+        #app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            transition: transform 0.3s ease; /* Hiệu ứng mượt mà khi chuyển sang iframe */
+        }
+
+        header {
+            background-color: var(--card-bg);
+            padding: 20px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            z-index: 10;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: var(--primary-color);
+        }
+
+        /* Loading indicator */
+        #loading {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
+        }
+
+        /* Lưới chứa các nút Link */
+        #link-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            overflow-y: auto; /* Cho phép cuộn danh sách link */
+            flex-grow: 1;
+        }
+
+        .link-card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid #eee;
+        }
+
+        .link-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            border-color: var(--primary-color);
+        }
+
+        .link-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+        }
+
+        .link-card p {
+            margin: 0;
+            font-size: 14px;
+            color: #777;
+            word-break: break-all; /* Ngắt dòng nếu URL quá dài */
+        }
+
+        /* --- PHẦN TRÌNH DUYỆT NHÚNG TOÀN MÀN HÌNH (IFRAME) --- */
+        #iframe-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #fff;
+            display: none; /* Ẩn mặc định */
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        #iframe-header {
+            background-color: #333;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+        }
+
+        #iframe-title {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        #btn-close-iframe {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        #btn-close-iframe:hover {
+            background-color: #c82333;
+        }
+
+        #webview {
+            width: 100%;
+            flex-grow: 1;
+            border: none;
+        }
+
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h2><span class="status-dot"></span> Bảng Dữ Liệu Trực Tiếp</h2>
-    </div>
-    <div id="dataDashboard"><div class="empty-state">Đang nạp dữ liệu...</div></div>
-  </div>
 
-  <script>
-    document.addEventListener("DOMContentLoaded", () => { renderAllData(); setInterval(renderAllData, 2000); });
-    function renderAllData() {
-      const dashboard = document.getElementById("dataDashboard");
-      let html = "", hasData = false;
-      ["Home", "Ngân hàng", "Face ID"].forEach(sheet => {
-        const raw = localStorage.getItem("app_data_" + sheet);
-        if (raw) {
-          try {
-            const data = JSON.parse(raw);
-            if (Array.isArray(data) && data.length > 0) {
-              hasData = true;
-              html += `<div class="sheet-section"><div class="sheet-title">📁 Dữ liệu: ${sheet}</div><div class="table-container"><table><thead><tr>`;
-              const headers = Object.keys(data[0]);
-              headers.forEach(h => html += `<th>${h}</th>`);
-              html += `</tr></thead><tbody>`;
-              data.forEach(row => {
-                html += `<tr>`;
-                headers.forEach(k => {
-                  let v = row[k] ?? "";
-                  html += `<td>${(typeof v === 'string' && v.length > 60) ? `<span class="truncate" title="${v}">${v}</span>` : v}</td>`;
-                });
-                html += `</tr>`;
-              });
-              html += `</tbody></table></div></div>`;
+    <!-- 1. Giao diện chính chứa danh sách link -->
+    <div id="app-container">
+        <header>
+            <h1>Link Hub</h1>
+            <p>Chọn một liên kết để xem toàn màn hình</p>
+        </header>
+
+        <div id="loading">Đang tải dữ liệu từ Google Sheets...</div>
+        
+        <!-- Nơi render danh sách các link từ data.js -->
+        <div id="link-grid"></div>
+    </div>
+
+    <!-- 2. Trình duyệt nhúng toàn màn hình (sẽ hiện ra khi click vào link) -->
+    <div id="iframe-container">
+        <div id="iframe-header">
+            <span id="iframe-title">Đang tải...</span>
+            <button id="btn-close-iframe" onclick="closeWebView()">Đóng (X)</button>
+        </div>
+        <iframe id="webview" src="" allowfullscreen></iframe>
+    </div>
+
+    <!-- Import file data.js của bạn -->
+    <script src="data.js"></script>
+
+    <script>
+        // --- LOGIC XỬ LÝ GIAO DIỆN ---
+
+        const linkGrid = document.getElementById('link-grid');
+        const loadingIndicator = document.getElementById('loading');
+        
+        // Các DOM element cho chế độ xem toàn màn hình
+        const appContainer = document.getElementById('app-container');
+        const iframeContainer = document.getElementById('iframe-container');
+        const webview = document.getElementById('webview');
+        const iframeTitle = document.getElementById('iframe-title');
+
+        /**
+         * Hàm này được gọi khi có dữ liệu từ DataManager.
+         * Chức năng: Tạo các thẻ (card) chứa link và hiển thị lên màn hình.
+         * Giả định dữ liệu trả về từ Sheet "Home" là mảng các object: [{ Tên: "Google", Link: "https://google.com" }, ...]
+         */
+        function renderLinks(data) {
+            loadingIndicator.style.display = 'none'; // Ẩn chữ loading
+            linkGrid.innerHTML = ''; // Xóa nội dung cũ
+            
+            if (!data || data.length === 0) {
+                linkGrid.innerHTML = '<p>Không có dữ liệu hoặc lỗi kết nối.</p>';
+                return;
             }
-          } catch(e) {}
+
+            // Lặp qua từng dòng dữ liệu từ Google Sheets
+            data.forEach(item => {
+                // Giả sử sheet của bạn có cột tên là "Tên" và cột "Link" (hoặc "URL")
+                // Bạn có thể cần điều chỉnh "item.Tên" hoặc "item.Link" cho khớp với tiêu đề cột trong Sheet thực tế của bạn
+                const title = item.Name || item.Tên || item.Title || "Không có tên"; 
+                const url = item.Link || item.URL || item.Url || "";
+
+                if (url) {
+                    // Tạo HTML cho một thẻ link
+                    const card = document.createElement('div');
+                    card.className = 'link-card';
+                    card.innerHTML = `
+                        <h3>${title}</h3>
+                        <p>${url}</p>
+                    `;
+                    
+                    // Gắn sự kiện click để mở Iframe
+                    card.onclick = () => openWebView(title, url);
+                    
+                    linkGrid.appendChild(card);
+                }
+            });
         }
-      });
-      if (hasData) { if (dashboard.innerHTML !== html) dashboard.innerHTML = html; }
-      else dashboard.innerHTML = `<div class="empty-state">Chưa có dữ liệu. Hãy mở Trang Chủ để tải.</div>`;
-    }
-  </script>
+
+        // --- CÁC HÀM ĐIỀU KHIỂN TRÌNH DUYỆT NHÚNG (IFRAME) ---
+
+        /**
+         * Mở một URL trong iframe toàn màn hình
+         */
+        function openWebView(title, url) {
+            iframeTitle.innerText = title;
+            webview.src = url; // Gán URL cho iframe
+            
+            // Hiệu ứng ẩn giao diện chính, hiện iframe
+            appContainer.style.display = 'none';
+            iframeContainer.style.display = 'flex';
+        }
+
+        /**
+         * Đóng iframe, quay lại màn hình chính
+         */
+        function closeWebView() {
+            webview.src = ""; // Xóa source để dừng video/nhạc nếu có đang phát
+            
+            // Ẩn iframe, hiện lại giao diện chính
+            iframeContainer.style.display = 'none';
+            appContainer.style.display = 'flex';
+        }
+
+        // --- KHỞI CHẠY ỨNG DỤNG ---
+
+        // Gọi DataManager từ file data.js của bạn
+        // Nó sẽ tự động lấy data offline trước, sau đó fetch data online và cập nhật lại
+        if (typeof DataManager !== 'undefined') {
+            DataManager.startBackgroundWorker(renderLinks);
+        } else {
+            loadingIndicator.innerHTML = "<span style='color:red'>Lỗi: Không tìm thấy file data.js</span>";
+        }
+    </script>
 </body>
 </html>
