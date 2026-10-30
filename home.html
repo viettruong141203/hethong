@@ -1,175 +1,535 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Trang Chủ - Hệ Thống Trình Duyệt</title>
-  <style>
-    :root { --bg-glass: rgba(18, 20, 26, 0.95); --border-glass: rgba(255, 255, 255, 0.08); --primary: #3b82f6; --danger: #ef4444; --text-main: #f3f4f6; --text-muted: #9ca3af; --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5); }
-    body { margin: 0; font-family: system-ui, sans-serif; height: 100vh; height: 100dvh; overflow: hidden; background-color: #0b0f19; }
-    .iframe-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--text-muted); }
-    .iframe-container span.placeholder { font-size: 14px; background: rgba(255, 255, 255, 0.03); padding: 12px 20px; border-radius: 30px; border: 1px solid var(--border-glass); backdrop-filter: blur(8px); text-align: center; margin: 0 20px;}
-    iframe { width: 100%; height: 100%; border: none; background: #fff; position: relative; z-index: 2;}
-    .floating-controls { position: fixed; top: max(20px, env(safe-area-inset-top)); left: max(20px, env(safe-area-inset-left)); z-index: 100; display: flex; gap: 10px;}
-    .float-btn { background: rgba(18, 20, 26, 0.6); border: 1px solid var(--border-glass); backdrop-filter: blur(12px); padding: 10px; border-radius: 12px; cursor: pointer; display: flex; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: 0.3s; }
-    .float-btn svg { width: 20px; height: 20px; stroke: var(--text-main); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; fill: none;}
-    .float-btn:hover { background: rgba(59, 130, 246, 0.2); border-color: rgba(59, 130, 246, 0.4); transform: translateY(-2px); }
-    .float-btn:hover svg { stroke: var(--primary); }
-    .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 7, 18, 0.6); backdrop-filter: blur(4px); z-index: 101; opacity: 0; visibility: hidden; transition: 0.3s; }
-    .overlay.show { opacity: 1; visibility: visible; }
-    .sidebar { position: fixed; top: 0; left: -100%; width: 85%; max-width: 320px; height: 100dvh; background: var(--bg-glass); backdrop-filter: blur(20px); border-right: 1px solid var(--border-glass); color: var(--text-main); display: flex; flex-direction: column; z-index: 102; box-shadow: var(--shadow); transition: left 0.35s; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); box-sizing: border-box; }
-    .sidebar.open { left: 0; }
-    .sidebar-header { padding: 20px; display: flex; flex-direction: column; gap: 16px; border-bottom: 1px solid var(--border-glass); }
-    .header-top { display: flex; justify-content: space-between; align-items: center; }
-    .header-top h3 { margin: 0; font-size: 16px; }
-    .close-btn { background: rgba(255,255,255,0.05); border: none; color: var(--text-muted); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
-    .close-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
-    .btn-add { padding: 10px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; color: #fff; background: var(--primary); border: none; transition: 0.2s; text-align: center;}
-    .btn-add:hover { background: #2563eb; }
-    .nav-list { list-style: none; padding: 12px; margin: 0; overflow-y: auto; flex: 1; }
-    .nav-item { padding: 12px 14px; margin: 4px 0; border-radius: 10px; cursor: pointer; transition: 0.2s; font-size: 14px; color: var(--text-muted); display: flex; align-items: center; word-break: break-word; }
-    .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text-main); }
-    .nav-item.active { background: rgba(59, 130, 246, 0.15); color: var(--primary); font-weight: 600; border: 1px solid rgba(59, 130, 246, 0.2); }
-    .sidebar-footer { padding: 16px 15px; border-top: 1px solid var(--border-glass); display: flex; align-items: center; justify-content: space-between; gap: 10px; background: rgba(0,0,0,0.2); box-sizing: border-box;}
-    .user-info { font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
-    .btn-logout { flex-shrink: 0; display: flex; align-items: center; gap: 6px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #f87171; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-    .btn-logout svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2;}
-    .btn-logout:hover { background: var(--danger); color: #fff; }
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 7, 18, 0.75); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 105; padding: 20px; box-sizing: border-box; }
-    .modal { background: #151922; border: 1px solid var(--border-glass); padding: 25px 20px; border-radius: 20px; width: 100%; max-width: 400px; box-shadow: 0 25px 50px rgba(0,0,0,0.7); color: var(--text-main); box-sizing: border-box; }
-    .modal h3 { margin: 0 0 20px 0; text-align: center; font-size: 18px; }
-    .modal label { display: block; margin-bottom: 6px; font-size: 12px; color: var(--text-muted); text-transform: uppercase;}
-    .modal input { width: 100%; padding: 12px 14px; margin-bottom: 16px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass); border-radius: 12px; box-sizing: border-box; color: #fff; font-size: 14px; outline: none; transition: 0.2s; }
-    .modal input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
-    .modal-actions { display: flex; gap: 10px;}
-    .btn-save, .btn-cancel { flex: 1; padding: 12px; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 14px; border: none; transition: 0.2s; }
-    .btn-save { background: var(--primary); color: white; }
-    .btn-cancel { background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid var(--border-glass); }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hệ Thống Quản Lý - Đinh Viết Trường</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Hiệu ứng Glassmorphism Dark Mode */
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .glass-panel {
+            background: rgba(17, 25, 40, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.125);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        
+        .glass-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .glass-input:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #6366f1;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+
+        .glass-button {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.1s;
+        }
+        
+        .glass-button:active {
+            transform: scale(0.98);
+        }
+
+        /* Toast Message */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .toast {
+            background: rgba(17, 25, 40, 0.9);
+            backdrop-filter: blur(8px);
+            border-left: 4px solid #6366f1;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            animation: slideIn 0.3s ease forwards;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toast.error { border-left-color: #ef4444; }
+        .toast.success { border-left-color: #22c55e; }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Tùy chỉnh Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+
+        /* Loader */
+        .loader {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top: 3px solid #6366f1;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
-<body>
+<body class="antialiased">
 
-  <div class="floating-controls">
-    <button class="float-btn" onclick="openSidebar()" title="Mở menu"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-    <button class="float-btn" onclick="toggleFullScreen()" title="Toàn màn hình"><svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></button>
-  </div>
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
 
-  <div class="overlay" id="pageOverlay" onclick="closeSidebar()"></div>
+    <!-- MÀN HÌNH XÁC THỰC (Đăng nhập / Đăng ký) -->
+    <div id="auth-view" class="min-h-screen flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-md p-8 rounded-2xl">
+            <!-- Tabs -->
+            <div class="flex mb-6 border-b border-gray-700">
+                <button id="tab-login" class="flex-1 pb-3 text-center font-semibold text-indigo-400 border-b-2 border-indigo-500 transition-colors" onclick="switchAuthTab('login')">
+                    Đăng nhập
+                </button>
+                <button id="tab-register" class="flex-1 pb-3 text-center font-semibold text-gray-400 border-b-2 border-transparent transition-colors hover:text-gray-200" onclick="switchAuthTab('register')">
+                    Đăng ký
+                </button>
+            </div>
 
-  <div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="header-top">
-        <h3>Danh Sách Trang</h3>
-        <button class="close-btn" onclick="closeSidebar()">✕</button>
-      </div>
-      <button class="btn-add" onclick="openModal()">+ Thêm Trang Mới</button>
+            <!-- Form Đăng Nhập -->
+            <form id="login-form" class="space-y-4" onsubmit="handleLogin(event)">
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-300">Email</label>
+                    <div class="relative">
+                        <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input type="email" id="login-email" required class="glass-input w-full pl-10 pr-4 py-2 rounded-lg" placeholder="Email của bạn">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-300">Mật khẩu</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input type="password" id="login-password" required class="glass-input w-full pl-10 pr-4 py-2 rounded-lg" placeholder="••••••••">
+                    </div>
+                </div>
+                <button type="submit" class="glass-button w-full py-2.5 rounded-lg font-semibold flex justify-center items-center gap-2 mt-6">
+                    <span id="login-text">Đăng nhập</span>
+                    <div id="login-loader" class="loader"></div>
+                </button>
+            </form>
+
+            <!-- Form Đăng Ký -->
+            <form id="register-form" class="space-y-4 hidden" onsubmit="handleRegister(event)">
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-300">Họ và Tên</label>
+                    <div class="relative">
+                        <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="reg-name" required class="glass-input w-full pl-10 pr-4 py-2 rounded-lg" placeholder="Tên hiển thị">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-300">Email</label>
+                    <div class="relative">
+                        <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input type="email" id="reg-email" required class="glass-input w-full pl-10 pr-4 py-2 rounded-lg" placeholder="Email của bạn">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-300">Mật khẩu</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input type="password" id="reg-password" required class="glass-input w-full pl-10 pr-4 py-2 rounded-lg" placeholder="••••••••">
+                    </div>
+                </div>
+                <button type="submit" class="glass-button w-full py-2.5 rounded-lg font-semibold flex justify-center items-center gap-2 mt-6">
+                    <span id="reg-text">Tạo tài khoản</span>
+                    <div id="reg-loader" class="loader"></div>
+                </button>
+            </form>
+        </div>
     </div>
-    
-    <ul class="nav-list" id="navList">
-      <li style="padding: 20px; text-align: center; color: #9ca3af; font-size: 13px;">Đang tải dữ liệu...</li>
-    </ul>
-    
-    <div class="sidebar-footer">
-      <span class="user-info" id="userDisplay">Tài khoản</span>
-      <button class="btn-logout" onclick="handleLogout()">
-        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14l5-5-5-5m5 5H9"/></svg> Thoát
-      </button>
+
+    <!-- MÀN HÌNH CHÍNH (Dashboard) -->
+    <div id="app-view" class="hidden min-h-screen flex flex-col md:flex-row">
+        <!-- Sidebar -->
+        <aside class="glass-panel w-full md:w-64 md:h-screen flex-shrink-0 flex flex-col justify-between">
+            <div>
+                <div class="p-6 border-b border-gray-700/50">
+                    <h2 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">Hệ Thống Quản Lý</h2>
+                    <p id="user-info" class="text-sm text-gray-400 mt-2"><i class="fas fa-circle text-green-400 text-xs mr-1"></i>Đang tải...</p>
+                </div>
+                <nav class="p-4 space-y-2">
+                    <button onclick="showAppTab('home')" id="nav-home" class="w-full text-left px-4 py-3 rounded-lg bg-indigo-500/20 text-indigo-300 font-medium transition-all">
+                        <i class="fas fa-home w-6"></i> Dữ liệu Home
+                    </button>
+                    <!-- Nút này chỉ hiện cho ADMIN -->
+                    <button onclick="showAppTab('dstk')" id="nav-dstk" class="hidden w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 font-medium transition-all">
+                        <i class="fas fa-users w-6"></i> Quản lý DSTK
+                    </button>
+                </nav>
+            </div>
+            <div class="p-4 border-t border-gray-700/50">
+                <button onclick="logout()" class="w-full px-4 py-2 rounded-lg hover:bg-red-500/20 text-red-400 transition-colors flex items-center justify-center gap-2">
+                    <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-4 md:p-8 h-screen overflow-y-auto">
+            
+            <!-- Tab Home Data -->
+            <div id="app-tab-home" class="space-y-6">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-2xl font-bold">Dữ liệu Home</h3>
+                    <button onclick="fetchData('Home')" class="glass-button px-4 py-2 rounded-lg text-sm">
+                        <i class="fas fa-sync-alt mr-1"></i> Làm mới
+                    </button>
+                </div>
+
+                <!-- Form Thêm dữ liệu (Chỉ ADMIN) -->
+                <div id="admin-add-form" class="glass-panel p-6 rounded-xl hidden">
+                    <h4 class="text-lg font-semibold mb-4 text-indigo-300"><i class="fas fa-plus-circle mr-2"></i>Thêm bản ghi mới (Quyền Admin)</h4>
+                    <form onsubmit="handleAddData(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <input type="text" id="add-col-a" required class="glass-input px-4 py-2 rounded-lg" placeholder="Dữ liệu cột A">
+                        <input type="text" id="add-col-b" required class="glass-input px-4 py-2 rounded-lg" placeholder="Dữ liệu cột B">
+                        <button type="submit" class="glass-button rounded-lg font-semibold flex justify-center items-center gap-2">
+                            <span id="add-text">Thêm dữ liệu</span>
+                            <div id="add-loader" class="loader"></div>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Bảng Data Home -->
+                <div class="glass-panel rounded-xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-black/20 text-gray-300 text-sm uppercase tracking-wider">
+                                    <th class="p-4 border-b border-gray-700">Cột A</th>
+                                    <th class="p-4 border-b border-gray-700">Cột B</th>
+                                    <th class="p-4 border-b border-gray-700 text-right">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="home-table-body" class="divide-y divide-gray-700/50">
+                                <tr><td colspan="3" class="p-8 text-center text-gray-400">Đang tải dữ liệu...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab DSTK (Chỉ ADMIN) -->
+            <div id="app-tab-dstk" class="hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-2xl font-bold">Danh sách Tài khoản</h3>
+                    <button onclick="fetchData('DSTK')" class="glass-button px-4 py-2 rounded-lg text-sm">
+                        <i class="fas fa-sync-alt mr-1"></i> Làm mới
+                    </button>
+                </div>
+                <div class="glass-panel rounded-xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-black/20 text-gray-300 text-sm uppercase tracking-wider">
+                                    <th class="p-4 border-b border-gray-700">Email</th>
+                                    <th class="p-4 border-b border-gray-700">Họ Tên</th>
+                                    <th class="p-4 border-b border-gray-700">Quyền</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dstk-table-body" class="divide-y divide-gray-700/50">
+                                <tr><td colspan="3" class="p-8 text-center text-gray-400">Đang tải dữ liệu...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
     </div>
-  </div>
 
-  <div class="iframe-container">
-    <span class="placeholder">Bấm vào biểu tượng ☰ để mở danh sách trang</span>
-    <iframe id="contentFrame" src="" allowfullscreen style="display: none;"></iframe>
-  </div>
+    <!-- LOGIC ỨNG DỤNG -->
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbzU2-uP0jUUia8w74BBQ7U78OUn3d_SE7cEd_LBZJbq2b2g4HCJyFRAOLKMU9p2zb0F/exec";
+        
+        let currentUser = null;
 
-  <div class="modal-overlay" id="addModal">
-    <div class="modal">
-      <h3>Thêm Trang Mới</h3>
-      <label>Tên hiển thị</label>
-      <input type="text" id="newName" placeholder="Nhập tên trang...">
-      <label>Đường dẫn (URL)</label>
-      <input type="url" id="newUrl" placeholder="https://...">
-      <div class="modal-actions">
-        <button class="btn-cancel" onclick="closeModal()">Hủy</button>
-        <button class="btn-save" id="btnSave" onclick="saveData()">Lưu lại</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="data.js"></script>
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const currentUser = localStorage.getItem("currentUser");
-      if (!currentUser) return window.location.href = "index.html"; 
-      
-      document.getElementById("userDisplay").textContent = "👤 " + currentUser;
-      openSidebar();
-      
-      // Khởi chạy vòng lặp ngầm
-      DataManager.startBackgroundWorker((data) => {
-        const pages = [];
-        data.forEach(item => {
-          if (item.row !== 1 && item.A && item.B) pages.push({ name: item.A, url: item.B }); 
+        // Khởi tạo
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showDashboard();
+            }
         });
-        renderNavigation(pages);
-      });
-    });
 
-    function handleLogout() {
-      if (confirm("Đăng xuất tài khoản?")) {
-        DataManager.stopBackgroundWorker();
-        DataManager.clearCache();
-        window.location.href = "index.html";
-      }
-    }
+        // ================= GIAO DIỆN & TIỆN ÍCH =================
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icon = type === 'success' ? '<i class="fas fa-check-circle text-green-400 text-xl"></i>' : '<i class="fas fa-exclamation-circle text-red-400 text-xl"></i>';
+            toast.innerHTML = `${icon} <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
 
-    function toggleFullScreen() {
-      const doc = document.documentElement;
-      if (!document.fullscreenElement) doc.requestFullscreen?.() || doc.webkitRequestFullscreen?.();
-      else document.exitFullscreen?.() || document.webkitExitFullscreen?.();
-    }
-    
-    function openSidebar() { document.getElementById("sidebar").classList.add("open"); document.getElementById("pageOverlay").classList.add("show"); }
-    function closeSidebar() { document.getElementById("sidebar").classList.remove("open"); document.getElementById("pageOverlay").classList.remove("show"); }
-    function openModal() { document.getElementById("newName").value = ""; document.getElementById("newUrl").value = ""; document.getElementById("addModal").style.display = "flex"; closeSidebar(); }
-    function closeModal() { document.getElementById("addModal").style.display = "none"; }
+        function toggleLoader(idPrefix, isLoading) {
+            document.getElementById(`${idPrefix}-text`).style.display = isLoading ? 'none' : 'block';
+            document.getElementById(`${idPrefix}-loader`).style.display = isLoading ? 'block' : 'none';
+        }
 
-    function renderNavigation(pages) {
-      const navList = document.getElementById("navList");
-      const currentActive = document.querySelector(".nav-item.active")?.textContent;
-      navList.innerHTML = ""; 
-      
-      if(pages.length === 0) return navList.innerHTML = "<li style='text-align:center;color:#9ca3af;padding:20px;'>Chưa có trang nào</li>";
+        function switchAuthTab(tab) {
+            document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
+            document.getElementById('register-form').classList.toggle('hidden', tab !== 'register');
+            
+            const loginTab = document.getElementById('tab-login');
+            const regTab = document.getElementById('tab-register');
 
-      pages.forEach(page => {
-        const li = document.createElement("li");
-        li.className = "nav-item";
-        if (page.name === currentActive) li.classList.add("active");
-        li.textContent = page.name;
-        li.onclick = () => {
-          document.querySelectorAll(".nav-item").forEach(i => i.classList.remove("active"));
-          li.classList.add("active");
-          document.querySelector(".placeholder").style.display = "none";
-          const iframe = document.getElementById("contentFrame");
-          iframe.src = page.url; iframe.style.display = "block";
-          closeSidebar();
-        };
-        navList.appendChild(li);
-      });
-    }
+            if(tab === 'login') {
+                loginTab.className = "flex-1 pb-3 text-center font-semibold text-indigo-400 border-b-2 border-indigo-500 transition-colors";
+                regTab.className = "flex-1 pb-3 text-center font-semibold text-gray-400 border-b-2 border-transparent transition-colors hover:text-gray-200";
+            } else {
+                regTab.className = "flex-1 pb-3 text-center font-semibold text-indigo-400 border-b-2 border-indigo-500 transition-colors";
+                loginTab.className = "flex-1 pb-3 text-center font-semibold text-gray-400 border-b-2 border-transparent transition-colors hover:text-gray-200";
+            }
+        }
 
-    async function saveData() {
-      const name = document.getElementById("newName").value.trim(), url = document.getElementById("newUrl").value.trim();
-      const btnSave = document.getElementById("btnSave");
-      if (!name || !url) return alert("Điền đủ thông tin!");
-      btnSave.textContent = "Đang lưu..."; btnSave.disabled = true;
+        function showAppTab(tab) {
+            document.getElementById('app-tab-home').classList.toggle('hidden', tab !== 'home');
+            document.getElementById('app-tab-dstk').classList.toggle('hidden', tab !== 'dstk');
+            
+            const navHome = document.getElementById('nav-home');
+            const navDstk = document.getElementById('nav-dstk');
+            
+            const activeClass = "w-full text-left px-4 py-3 rounded-lg bg-indigo-500/20 text-indigo-300 font-medium transition-all";
+            const inactiveClass = "w-full text-left px-4 py-3 rounded-lg hover:bg-white/5 text-gray-300 font-medium transition-all";
 
-      const res = await DataManager.add("Home", { "A": name, "B": url });
-      if (res.success) { closeModal(); openSidebar(); }
-      else alert("Lỗi: " + res.message);
-      
-      btnSave.textContent = "Lưu lại"; btnSave.disabled = false;
-    }
-  </script>
+            navHome.className = tab === 'home' ? activeClass : inactiveClass;
+            navDstk.className = tab === 'dstk' ? activeClass : inactiveClass;
+
+            fetchData(tab === 'home' ? 'Home' : 'DSTK');
+        }
+
+        // ================= XÁC THỰC (AUTH) =================
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-password').value;
+            
+            toggleLoader('login', true);
+            try {
+                // Giả lập logic kiểm tra: Lấy danh sách DSTK về và dò
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ sheet: "DSTK", action: "get" })
+                });
+                const result = await response.json();
+                
+                // Cấu trúc Data Google Sheet thường trả về mảng các dòng
+                // Giả sử mảng data: [[email, ten, pass, quyen], ...]
+                let userFound = null;
+                if(result.data && result.data.length > 0) {
+                    for(let i=1; i<result.data.length; i++) { // Bỏ qua Header
+                        const row = result.data[i];
+                        if(row[0] === email && row[2] === pass) {
+                            userFound = { email: row[0], name: row[1], role: row[3] || 'User' };
+                            break;
+                        }
+                    }
+                }
+
+                if(userFound) {
+                    currentUser = userFound;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    showToast('Đăng nhập thành công!');
+                    showDashboard();
+                } else {
+                    showToast('Sai email hoặc mật khẩu', 'error');
+                }
+            } catch (error) {
+                showToast('Lỗi kết nối máy chủ', 'error');
+                console.error(error);
+            }
+            toggleLoader('login', false);
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const pass = document.getElementById('reg-password').value;
+            
+            toggleLoader('reg', true);
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        sheet: "DSTK",
+                        action: "add",
+                        A: email,
+                        B: name,
+                        C: pass,
+                        D: "User" // Mặc định đăng ký là User
+                    })
+                });
+                
+                const result = await response.json();
+                if(result.status === 'success' || result.result === 'success') {
+                    showToast('Đăng ký thành công! Vui lòng đăng nhập.');
+                    switchAuthTab('login');
+                    document.getElementById('login-email').value = email;
+                    document.getElementById('register-form').reset();
+                } else {
+                    showToast('Lỗi từ máy chủ khi tạo tài khoản', 'error');
+                }
+            } catch (error) {
+                showToast('Lỗi kết nối máy chủ', 'error');
+            }
+            toggleLoader('reg', false);
+        }
+
+        function logout() {
+            localStorage.removeItem('currentUser');
+            currentUser = null;
+            document.getElementById('app-view').classList.add('hidden');
+            document.getElementById('auth-view').classList.remove('hidden');
+            showToast('Đã đăng xuất');
+        }
+
+        // ================= LOGIC MAIN APP =================
+        function showDashboard() {
+            document.getElementById('auth-view').classList.add('hidden');
+            document.getElementById('app-view').classList.remove('hidden');
+            
+            document.getElementById('user-info').innerHTML = `<i class="fas fa-circle text-green-400 text-xs mr-1"></i> ${currentUser.name} (${currentUser.role})`;
+            
+            // Phân quyền Admin
+            const isAdmin = currentUser.role.toUpperCase() === 'ADMIN';
+            document.getElementById('nav-dstk').classList.toggle('hidden', !isAdmin);
+            document.getElementById('admin-add-form').classList.toggle('hidden', !isAdmin);
+
+            showAppTab('home');
+            
+            // Xóa rác form đăng nhập
+            document.getElementById('login-password').value = '';
+        }
+
+        async function fetchData(sheetName) {
+            const tableBody = sheetName === 'Home' ? document.getElementById('home-table-body') : document.getElementById('dstk-table-body');
+            tableBody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-gray-400"><div class="flex justify-center"><div class="loader" style="display:block"></div></div></td></tr>`;
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ sheet: sheetName, action: "get" })
+                });
+                const result = await response.json();
+                
+                tableBody.innerHTML = '';
+                if(result.data && result.data.length > 1) { // Bỏ qua Header dòng 0
+                    for(let i=1; i<result.data.length; i++) {
+                        const row = result.data[i];
+                        if(sheetName === 'Home') {
+                            tableBody.innerHTML += `
+                                <tr class="hover:bg-white/5 transition-colors group">
+                                    <td class="p-4 text-gray-200">${row[0] || ''}</td>
+                                    <td class="p-4 text-gray-300">${row[1] || ''}</td>
+                                    <td class="p-4 text-right">
+                                        <button onclick="copyToClipboard('${row[0]} | ${row[1]}')" class="text-gray-500 hover:text-indigo-400 transition-colors" title="Sao chép">
+                                            <i class="far fa-copy"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        } else {
+                            // Cột DSTK: Email, Tên, Quyền (Ẩn Mật khẩu)
+                            const badgeClass = (row[3] || '').toUpperCase() === 'ADMIN' ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' : 'bg-gray-500/20 text-gray-300 border-gray-500/30';
+                            tableBody.innerHTML += `
+                                <tr class="hover:bg-white/5 transition-colors">
+                                    <td class="p-4 text-gray-200">${row[0] || ''}</td>
+                                    <td class="p-4 text-gray-300">${row[1] || ''}</td>
+                                    <td class="p-4"><span class="px-2 py-1 text-xs rounded-full border ${badgeClass}">${row[3] || 'User'}</span></td>
+                                </tr>
+                            `;
+                        }
+                    }
+                } else {
+                    tableBody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-gray-400">Không có dữ liệu</td></tr>`;
+                }
+            } catch (error) {
+                tableBody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-red-400">Lỗi tải dữ liệu</td></tr>`;
+                console.error(error);
+            }
+        }
+
+        async function handleAddData(e) {
+            e.preventDefault();
+            const colA = document.getElementById('add-col-a').value;
+            const colB = document.getElementById('add-col-b').value;
+            
+            toggleLoader('add', true);
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        sheet: "Home",
+                        action: "add",
+                        A: colA,
+                        B: colB
+                    })
+                });
+                
+                showToast('Thêm dữ liệu thành công!');
+                document.getElementById('add-col-a').value = '';
+                document.getElementById('add-col-b').value = '';
+                fetchData('Home'); // Refresh bảng
+            } catch (error) {
+                showToast('Lỗi khi thêm dữ liệu', 'error');
+            }
+            toggleLoader('add', false);
+        }
+
+        // Tiện ích Copy client-side
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Đã sao chép vào khay nhớ tạm');
+            }).catch(err => {
+                showToast('Lỗi sao chép', 'error');
+            });
+        }
+    </script>
 </body>
 </html>
