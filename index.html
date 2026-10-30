@@ -52,7 +52,9 @@
     <div class="auth-switch" id="aSwitch">Chưa có tài khoản? <a onclick="toggleMode(true)">Đăng ký</a></div>
   </div>
 
+  <!-- Bắt buộc phải có file data.js cùng cấp với file HTML này -->
   <script src="data.js"></script>
+  
   <script>
     if(localStorage.getItem("currentUser")) window.location.href = "home.html";
     let isReg = false;
@@ -93,46 +95,75 @@
       btn.textContent = "Đang xử lý..."; 
       btn.disabled = true;
 
-      if (isReg) {
-        // [CHỨC NĂNG MỚI]: BƯỚC 1 - Lấy dữ liệu về để kiểm tra trùng lặp
-        const existingData = await DataManager.get("DSTK");
-        
-        if (existingData) {
-          // Tìm xem có E-mail nào trong cột A giống với E-mail vừa nhập không
-          const isDuplicate = existingData.find(r => r.A === e);
+      try {
+        if (isReg) {
+          // BƯỚC 1: Đăng ký - Lấy dữ liệu về để kiểm tra trùng lặp
+          const res = await DataManager.get("DSTK");
           
-          if (isDuplicate) {
-            alert("Tài khoản (E-mail) này đã tồn tại! Vui lòng chọn một tài khoản khác.");
-            btn.textContent = "Đăng Ký"; 
-            btn.disabled = false;
-            return; // Dừng tiến trình đăng ký tại đây
+          // Chuẩn hóa dữ liệu để tránh lỗi nếu API trả về cục data bao bọc
+          let existingData = [];
+          if (Array.isArray(res)) existingData = res;
+          else if (res && Array.isArray(res.data)) existingData = res.data;
+
+          if (existingData.length > 0) {
+            const isDuplicate = existingData.find(r => {
+              if (Array.isArray(r)) return r[0] === e; // Nếu là mảng 2 chiều (Google Sheets raw)
+              return r.A === e || r["E-mail"] === e; // Nếu là Object
+            });
+            
+            if (isDuplicate) {
+              alert("Tài khoản (E-mail) này đã tồn tại! Vui lòng chọn một tài khoản khác.");
+              btn.textContent = "Đăng Ký"; 
+              btn.disabled = false;
+              return; 
+            }
           }
-        }
 
-        // BƯỚC 2 - Nếu không trùng lặp thì tiến hành lưu mới
-        const res = await DataManager.add("DSTK", { "A": e, "B": n, "C": p });
-        if(res.success) { 
-          alert("Đăng ký thành công! Vui lòng đăng nhập."); 
-          toggleMode(false); 
+          // BƯỚC 2: Thêm mới
+          const addRes = await DataManager.add("DSTK", { "A": e, "B": n, "C": p, "D": "User" });
+          if(addRes && (addRes.success || addRes.status === 'success' || addRes.result === 'success')) { 
+            alert("Đăng ký thành công! Vui lòng đăng nhập."); 
+            toggleMode(false); 
+          } else {
+            alert("Lỗi: " + (addRes.message || "Không thể lưu dữ liệu"));
+          }
+
         } else {
-          alert("Lỗi: " + res.message);
-        }
+          // BƯỚC 1: Đăng nhập
+          const res = await DataManager.get("DSTK");
+          
+          let existingData = [];
+          if (Array.isArray(res)) existingData = res;
+          else if (res && Array.isArray(res.data)) existingData = res.data;
 
-      } else {
-        // Chế độ Đăng nhập giữ nguyên
-        const data = await DataManager.get("DSTK");
-        if(data) {
-          const valid = data.find(r => r.A === e && (r.C === p || r.Mật_khẩu === p)) || (e === "admin" && p === "123456");
-          if(valid) { 
+          // Hỗ trợ mặc định cho admin
+          let isValid = (e === "admin" && p === "123456");
+
+          if (!isValid && existingData.length > 0) {
+            const user = existingData.find(r => {
+              // Hỗ trợ đọc cả dạng Array r[0] và dạng Object r.A
+              if (Array.isArray(r)) {
+                return r[0] === e && r[2] === p; // r[0] là Email, r[2] là Pass
+              }
+              return (r.A === e || r["E-mail"] === e) && (r.C === p || r.Mật_khẩu === p || r["Mật khẩu"] === p);
+            });
+            if (user) isValid = true;
+          }
+
+          if(isValid) { 
             localStorage.setItem("currentUser", e); 
+            // Nếu đăng nhập thành công, chuyển hướng sang home.html
             window.location.href = "home.html"; 
           } else {
             alert("Sai tài khoản hoặc mật khẩu!");
           }
-        } else {
-          alert("Lỗi kết nối cơ sở dữ liệu!");
         }
+      } catch (error) {
+        console.error("Lỗi:", error);
+        alert("Lỗi kết nối cơ sở dữ liệu! Bạn hãy kiểm tra lại Internet hoặc file data.js");
       }
+
+      // Khôi phục trạng thái nút sau khi xử lý xong
       btn.textContent = isReg ? "Đăng Ký" : "Đăng Nhập"; 
       btn.disabled = false;
     }
