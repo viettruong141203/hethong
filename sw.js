@@ -1,11 +1,11 @@
-const CACHE_NAME = 'bot-chat-v1';
+const CACHE_NAME = 'bot-chat-v2';
 const urlsToCache = [
   './',
   './chat.html',
-  './manifest.json'
+  './manifest.json',
+  './icon.svg'
 ];
 
-// Cài đặt service worker và lưu cache tĩnh
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -13,15 +13,14 @@ self.addEventListener('install', event => {
   );
 });
 
-// Chặn request để trả về nội dung từ cache nếu mất mạng
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => {
         if (response) {
-          return response; // Trả về từ Cache
+          return response; 
         }
-        return fetch(event.request); // Lấy từ mạng
+        return fetch(event.request);
       })
   );
 });
