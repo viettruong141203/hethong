@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- Khai báo PWA -->
+    
+    <!-- Khai báo PWA và Icon -->
     <meta name="theme-color" content="#0084ff">
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="apple-touch-icon" href="icon.svg">
     
-    <title>Bot Chat</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><path fill=%22%230084ff%22 d=%22M16 0C7.163 0 0 6.827 0 15.238c0 4.507 1.954 8.553 5.05 11.365V32l4.63-2.54c1.93.535 3.987.828 6.32.828 8.837 0 16-6.827 16-15.238S24.837 0 16 0zm1.09 20.354l-4.11-4.39-8.02 4.39 8.81-9.35 4.19 4.39 7.94-4.39-8.81 9.35z%22/></svg>">
+    <title>Bot chat</title>
     
     <style>
         :root {
@@ -91,6 +92,7 @@
 
         <div class="header">
             <span class="header-title">Bot chat</span>
+            <!-- Nút cài đặt sẽ tự động hiện khi dùng Chrome/Android hoặc trình duyệt tương thích -->
             <button id="installAppBtn" class="install-btn">⬇️ Cài đặt App</button>
         </div>
 
