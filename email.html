@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gửi Email qua Node.js</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: auto; background: #f4f4f9; }
+        .box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        input, textarea, button { width: 100%; margin-bottom: 15px; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc;}
+        button { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; }
+        button:hover { background: #218838; }
+        #message { text-align: center; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h2 style="text-align:center; margin-top:0;">Form Gửi Email</h2>
+    
+    <input type="text" id="tieu_de" placeholder="Tiêu đề email" value="Email từ HTML sang email.js">
+    <input type="email" id="email_nhan" placeholder="Email người nhận" required>
+    
+    <textarea id="noi_dung" rows="5" placeholder="Nội dung email..."><h1>Xin chào</h1><p>Dữ liệu đã đi qua Node.js thành công!</p></textarea>
+    
+    <button id="btnSubmit" onclick="sendDataToNode()">Gửi Email</button>
+    <div id="message"></div>
+</div>
+
+<script>
+    async function sendDataToNode() {
+        const btn = document.getElementById('btnSubmit');
+        const msg = document.getElementById('message');
+        
+        // 1. Lấy dữ liệu
+        const data = {
+            tieu_de: document.getElementById('tieu_de').value,
+            email_nhan: document.getElementById('email_nhan').value,
+            nguoi_gui: "Hệ thống Demo",
+            tra_loi: "no-reply@demo.com",
+            noi_dung: document.getElementById('noi_dung').value
+        };
+
+        btn.innerText = 'Đang xử lý...';
+        btn.disabled = true;
+        msg.innerText = '';
+
+        try {
+            // 2. Gửi dữ liệu xuống file email.js đang chạy ở cổng 3000
+            const response = await fetch('http://localhost:3000/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            // 3. Hiển thị kết quả trả về từ email.js
+            if (result.success) {
+                msg.style.color = "green";
+                msg.innerText = "✅ " + result.message;
+            } else {
+                msg.style.color = "red";
+                msg.innerText = "❌ " + result.message;
+            }
+        } catch (error) {
+            msg.style.color = "red";
+            msg.innerText = "❌ Không thể kết nối tới email.js. Hãy chắc chắn bạn đã chạy lệnh 'node email.js'!";
+        } finally {
+            btn.innerText = 'Gửi Email';
+            btn.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>
