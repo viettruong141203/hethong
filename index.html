@@ -3,125 +3,412 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hóa Đơn Thanh Toán</title>
+    <title>Quản Lý Đơn Hàng - Dashboard</title>
     <style>
-        :root { --vcb-color: #006633; --bg-color: #f3f4f6; --text-muted: #6b7280; --border: #e5e7eb; }
-        body { font-family: Arial, sans-serif; background: var(--bg-color); margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .bill-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow: hidden; display: none; }
-        .header { background: var(--vcb-color); color: white; text-align: center; padding: 20px; font-size: 20px; font-weight: bold; }
-        .amount-section { text-align: center; padding: 20px; border-bottom: 1px dashed var(--border); }
-        .amount-val { font-size: 32px; font-weight: bold; color: var(--vcb-color); margin-top: 5px; }
-        .details { padding: 20px; font-size: 14px; }
-        .row { display: flex; justify-content: space-between; margin-bottom: 15px; }
-        .row-val { font-weight: bold; text-align: right; word-break: break-all; padding-left: 10px; }
-        .qr-section { text-align: center; padding: 0 20px 20px; }
-        .qr-img { width: 200px; height: 200px; border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
-        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; background: #fef3c7; color: #d97706; }
-        .status-success { background: #d1fae5; color: #059669; }
-        #message-box { text-align: center; padding: 40px 20px; background: white; border-radius: 12px; width: 100%; max-width: 400px; }
+        :root {
+            --primary: #4f46e5; /* Indigo hiện đại */
+            --primary-hover: #4338ca;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Header tối giản hiện đại */
+        .header {
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 { 
+            margin: 0; 
+            font-size: 20px; 
+            font-weight: 700; 
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Nút icon chung */
+        .btn-icon {
+            background: #f1f5f9;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-icon:hover { 
+            background: #e2e8f0; 
+            color: var(--primary); 
+            transform: translateY(-1px);
+        }
+
+        /* Nút Nạp tiền nổi (FAB) phong cách cao cấp */
+        .fab-btn {
+            position: fixed;
+            bottom: 35px;
+            right: 35px;
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.5);
+            cursor: pointer;
+            border: none;
+            z-index: 100;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .fab-btn:hover { 
+            transform: scale(1.08) rotate(90deg); 
+            box-shadow: 0 15px 30px -5px rgba(79, 70, 229, 0.6);
+        }
+        
+        /* Container dạng Deck */
+        .deck-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding-bottom: 120px;
+        }
+
+        /* Thẻ Card Đơn Hàng */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            position: relative;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-id { 
+            font-weight: 700; 
+            color: var(--primary); 
+            font-size: 15px; 
+            letter-spacing: -0.01em;
+        }
+
+        .card-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .card-row span:first-child {
+            color: var(--text-muted);
+        }
+
+        /* Huy hiệu trạng thái tinh tế */
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #fef3c7; 
+            color: #b45309;
+        }
+        .status-success { 
+            background: #d1fae5; 
+            color: #065f46; 
+        }
+
+        /* Modal Sửa đơn */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none; justify-content: center; align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .modal {
+            background: white; 
+            padding: 24px; 
+            border-radius: 20px;
+            width: 90%; 
+            max-width: 380px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes scaleUp { from { transform: scale(0.95); } to { transform: scale(1); } }
+
+        .modal h3 { 
+            margin-top: 0; 
+            font-size: 18px; 
+            font-weight: 700; 
+            margin-bottom: 20px;
+        }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: var(--text-muted); }
+        .form-group input, .form-group select { 
+            width: 100%; padding: 12px; border: 1px solid var(--border); 
+            border-radius: 10px; box-sizing: border-box; 
+            font-size: 14px; outline: none; transition: border-color 0.2s;
+            background: #f8fafc;
+        }
+        .form-group input:focus, .form-group select:focus { 
+            border-color: var(--primary); 
+            background: #fff;
+        }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+        .btn { padding: 10px 18px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 14px; transition: background 0.2s; }
+        .btn-cancel { background: #f1f5f9; color: var(--text-muted); }
+        .btn-cancel:hover { background: #e2e8f0; }
+        .btn-save { background: var(--primary); color: white; }
+        .btn-save:hover { background: var(--primary-hover); }
+
+        #loading { 
+            text-align: center; 
+            padding: 60px; 
+            color: var(--text-muted); 
+            grid-column: 1 / -1; 
+            font-size: 15px; 
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
 
-    <div id="message-box">Đang tải dữ liệu đơn hàng...</div>
+    <div class="header">
+        <h1>
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="color: var(--primary);"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+            Quản Lý Đơn Hàng
+        </h1>
+        <button class="btn-icon" onclick="loadData()" title="Làm mới">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 1 0 2.1-5.7L2 9"/></svg>
+        </button>
+    </div>
 
-    <div class="bill-card" id="bill-card">
-        <div class="header">THÔNG TIN THANH TOÁN</div>
-        <div class="amount-section">
-            <span style="color: var(--text-muted); font-size: 14px;">Số tiền cần thanh toán</span>
-            <div class="amount-val" id="bill-amount">0 đ</div>
-        </div>
-        <div class="details">
-            <div class="row">
-                <span style="color: var(--text-muted)">Ngân hàng</span>
-                <span class="row-val" style="color: var(--vcb-color)">Vietcombank</span>
+    <!-- Container Deck -->
+    <div class="deck-container" id="deck-container">
+        <div id="loading">Đang tải dữ liệu hệ thống...</div>
+    </div>
+
+    <!-- Nút Nạp tiền nổi (FAB) -->
+    <button class="fab-btn" onclick="window.location.href='nap-tien.html'" title="Tạo đơn nạp tiền">
+        <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    </button>
+
+    <!-- Modal Sửa đơn hàng -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <h3>Chỉnh sửa đơn: <span id="edit-id-display" style="color: var(--primary);"></span></h3>
+            <div class="form-group">
+                <label>Trạng thái</label>
+                <select id="edit-status">
+                    <option value="Chờ thanh toán">Chờ thanh toán</option>
+                    <option value="Đã thanh toán">Đã thanh toán</option>
+                    <option value="Hủy bỏ">Hủy bỏ</option>
+                </select>
             </div>
-            <div class="row">
-                <span style="color: var(--text-muted)">Chủ tài khoản</span>
-                <span class="row-val">DINH VIET TRUONG</span>
+            <div class="form-group">
+                <label>Số tiền (VNĐ)</label>
+                <input type="number" id="edit-amount">
             </div>
-            <div class="row">
-                <span style="color: var(--text-muted)">Số tài khoản</span>
-                <span class="row-val">TGE60603130946VCB</span>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeModal()">Hủy</button>
+                <button class="btn btn-save" id="btn-save-edit">Lưu Thay Đổi</button>
             </div>
-            <div class="row">
-                <span style="color: var(--text-muted)">Nội dung chuyển khoản</span>
-                <span class="row-val" id="bill-content">---</span>
-            </div>
-            <hr style="border:0; border-top: 1px dashed var(--border); margin: 15px 0;">
-            <div class="row">
-                <span style="color: var(--text-muted)">Mã giao dịch</span>
-                <span class="row-val" id="bill-id">---</span>
-            </div>
-            <div class="row">
-                <span style="color: var(--text-muted)">Thời gian tạo</span>
-                <span class="row-val" id="bill-time" style="font-weight: normal;">---</span>
-            </div>
-            <div class="row">
-                <span style="color: var(--text-muted)">Trạng thái</span>
-                <span class="status-badge" id="bill-status">---</span>
-            </div>
-        </div>
-        <div class="qr-section">
-            <img id="qr-img" class="qr-img" src="" alt="Mã QR" style="display:none;">
-            <p style="font-size: 13px; color: var(--text-muted); margin-top:10px;">Quét mã bằng ứng dụng ngân hàng</p>
         </div>
     </div>
 
-    <!-- Nhúng file API từ GitHub của bạn -->
+    <!-- Nhúng file payment.js gốc từ GitHub -->
     <script src="https://viettruong141203.github.io/hethong/Bot/payment.js"></script>
 
     <script>
         const formatMoney = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+        let currentEditId = null;
 
-        document.addEventListener("DOMContentLoaded", () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const orderId = urlParams.get('id');
-            const msgBox = document.getElementById('message-box');
-            const billCard = document.getElementById('bill-card');
-
-            if (!orderId) {
-                msgBox.innerHTML = '<b style="color:red;">Lỗi: Không tìm thấy ID đơn hàng trên URL (?id=...)</b>';
+        // 1. Hàm load toàn bộ dữ liệu lúc khởi động
+        const loadData = async () => {
+            const container = document.getElementById('deck-container');
+            container.innerHTML = '<div id="loading">Đang lấy dữ liệu từ Google Apps Script...</div>';
+            
+            if (typeof PaymentAPI === 'undefined') {
+                container.innerHTML = '<div id="loading" style="color:var(--danger);">Lỗi: Không tải được payment.js</div>';
                 return;
             }
 
-            if (typeof PaymentAPI !== 'undefined') {
-                PaymentAPI.get(orderId).then(response => {
-                    if (response.success && response.data) {
-                        msgBox.style.display = 'none';
-                        billCard.style.display = 'block';
-
-                        const data = response.data;
-                        
-                        // Map dữ liệu mới: amount, content, id, time, status
-                        document.getElementById('bill-amount').innerText = formatMoney(data.amount);
-                        document.getElementById('bill-content').innerText = data.content;
-                        document.getElementById('bill-id').innerText = data.id;
-                        document.getElementById('bill-time').innerText = data.time;
-                        
-                        const statusEl = document.getElementById('bill-status');
-                        statusEl.innerText = data.status;
-                        if (data.status.toLowerCase().includes('đã thanh toán') || data.status.toLowerCase().includes('thành công')) {
-                            statusEl.classList.remove('status-badge');
-                            statusEl.classList.add('status-success', 'status-badge');
-                        }
-
-                        // Generate QR
-                        const qrUrl = `https://img.vietqr.io/image/VCB-TGE60603130946VCB-compact2.png?amount=${data.amount}&addInfo=${data.content}&accountName=DINH VIET TRUONG`;
-                        const qrImg = document.getElementById('qr-img');
-                        qrImg.src = qrUrl;
-                        qrImg.style.display = 'inline-block';
-
-                    } else {
-                        msgBox.innerHTML = `<b style="color:red;">Không tìm thấy dữ liệu cho mã đơn: ${orderId}</b><br><br><pre style="text-align:left;">${JSON.stringify(response, null, 2)}</pre>`;
+            try {
+                const response = await PaymentAPI.getAll();[span_0](start_span)[span_0](end_span)
+                
+                if (response && response.success && Array.isArray(response.data)) {
+                    container.innerHTML = '';
+                    if (response.data.length === 0) {
+                        container.innerHTML = '<div id="loading">Chưa có đơn hàng nào trong hệ thống.</div>';
+                        return;
                     }
-                }).catch(err => {
-                    msgBox.innerHTML = `<b style="color:red;">Lỗi kết nối API: ${err.message}</b>`;
-                });
+                    response.data.forEach(item => {
+                        renderCard(item, false);
+                    });
+                } else {
+                    container.innerHTML = '<div id="loading" style="color:var(--danger);">Cấu trúc dữ liệu trả về không hợp lệ.</div>';
+                }
+            } catch (error) {
+                container.innerHTML = `<div id="loading" style="color:var(--danger);">Lỗi API: ${error.message}</div>`;
+            }
+        };
+
+        // 2. Hàm vẽ hoặc cập nhật một thẻ card riêng lẻ
+        const renderCard = (item, isUpdate = false) => {
+            const container = document.getElementById('deck-container');
+            const statusStr = item.status ? item.status.toLowerCase() : '';
+            const isSuccess = statusStr.includes('đã thanh toán') || statusStr.includes('thành công');
+            const statusClass = isSuccess ? 'status-success' : '';
+            
+            const cardInnerHtml = `
+                <div class="card-header">
+                    <span class="card-id">#${item.id}</span>
+                    <button class="btn-icon" title="Sửa đơn" onclick="openModal('${item.id}', '${item.status || ''}', ${item.amount || 0})">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                    </button>
+                </div>
+                <div class="card-row">
+                    <span>Số tiền:</span>
+                    <strong style="color: var(--primary); font-size: 15px;">${formatMoney(item.amount)}</strong>
+                </div>
+                <div class="card-row">
+                    <span>Nội dung:</span>
+                    <span style="font-weight: 500;">${item.content || '---'}</span>
+                </div>
+                <div class="card-row">
+                    <span>Thời gian:</span>
+                    <span style="color: var(--text-muted); font-size: 13px;">${item.time || '---'}</span>
+                </div>
+                <div class="card-row" style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border);">
+                    <span>Trạng thái:</span>
+                    <span class="status-badge ${statusClass}">${item.status || '---'}</span>
+                </div>
+            `;
+
+            if (isUpdate) {
+                const existingCard = document.getElementById(`card-${item.id}`);
+                if (existingCard) {
+                    existingCard.innerHTML = cardInnerHtml;
+                }
             } else {
-                msgBox.innerHTML = '<b style="color:red;">Lỗi: Không tải được payment.js</b>';
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'card';
+                cardDiv.id = `card-${item.id}`;
+                cardDiv.innerHTML = cardInnerHtml;
+                container.appendChild(cardDiv);
+            }
+        };
+
+        // 3. Logic Modal Sửa đơn
+        const modal = document.getElementById('editModal');
+        const btnSave = document.getElementById('btn-save-edit');
+
+        window.openModal = (id, currentStatus, currentAmount) => {
+            currentEditId = id;
+            document.getElementById('edit-id-display').innerText = id;
+            
+            const statusSelect = document.getElementById('edit-status');
+            const options = Array.from(statusSelect.options);
+            const exists = options.some(opt => opt.value === currentStatus);
+            if(!exists && currentStatus) {
+                const newOption = new Option(currentStatus, currentStatus);
+                statusSelect.add(newOption);
+            }
+            statusSelect.value = currentStatus;
+            document.getElementById('edit-amount').value = currentAmount;
+            
+            modal.style.display = 'flex';
+        };
+
+        window.closeModal = () => {
+            modal.style.display = 'none';
+            currentEditId = null;
+        };
+
+        // 4. Xử lý lưu thay đổi thông qua hàm edit() gốc trong payment.js
+        btnSave.addEventListener('click', async () => {
+            const newStatus = document.getElementById('edit-status').value;
+            const newAmount = Number(document.getElementById('edit-amount').value);
+
+            btnSave.innerText = "Đang lưu...";
+            btnSave.disabled = true;
+
+            try {
+                const response = await PaymentAPI.edit(currentEditId, {[span_1](start_span)[span_1](end_span)
+                    status: newStatus,
+                    amount: newAmount
+                });
+
+                if (response && response.success) {
+                    closeModal();
+                    
+                    const detailRes = await PaymentAPI.get(currentEditId);[span_2](start_span)[span_2](end_span)
+                    if (detailRes && detailRes.success && detailRes.data) {
+                        renderCard(detailRes.data, true);
+                    } else {
+                        loadData();
+                    }
+                } else {
+                    alert("Lỗi cập nhật: " + JSON.stringify(response.message || response));
+                }
+            } catch (error) {
+                alert("Lỗi hệ thống: " + error.message);
+            } finally {
+                btnSave.innerText = "Lưu Thay Đổi";
+                btnSave.disabled = false;
             }
         });
+
+        // Tự động chạy khi tải trang xong
+        document.addEventListener('DOMContentLoaded', loadData);
     </script>
 </body>
 </html>
