@@ -3,78 +3,309 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gửi Email Đơn Giản</title>
+    <title>Hệ Thống Gửi Email - Premium Light</title>
+    <!-- Sử dụng Plus Jakarta Sans - Font chữ hiện đại, tròn trịa và cực kỳ cao cấp -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f7f6; padding: 20px; }
-        .box { background: white; max-width: 500px; margin: 0 auto; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        h2 { text-align: center; margin-top: 0; }
-        input, textarea, button { width: 100%; margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        textarea { height: 100px; resize: vertical; }
-        button { background: #007bff; color: white; border: none; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #0056b3; }
-        button:disabled { background: #999; cursor: not-allowed; }
-        #message { text-align: center; font-weight: bold; margin-top: 10px; }
+        :root {
+            --primary: #0f172a;
+            --primary-hover: #334155;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: rgba(15, 23, 42, 0.1);
+            --input-bg: rgba(255, 255, 255, 0.7);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            /* Hiệu ứng nền Aurora tuyệt đẹp */
+            background-color: #4158D0;
+            background-image: linear-gradient(43deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
+            background-size: 300% 300%;
+            animation: gradientMove 12s ease infinite;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+            color: var(--text-main);
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Thẻ form chính với hiệu ứng kính trắng sứ */
+        .premium-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            width: 100%;
+            max-width: 600px;
+            padding: 45px;
+            border-radius: 32px;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.15), inset 0 2px 4px rgba(255, 255, 255, 0.8);
+            animation: scaleUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes scaleUp {
+            from { opacity: 0; transform: scale(0.95) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header-icon {
+            font-size: 42px;
+            margin-bottom: 15px;
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .header h2 {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 15px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            flex: 1;
+            margin-bottom: 16px;
+        }
+
+        .form-row .form-group {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #334155;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 16px;
+            background: var(--input-bg);
+            border: 2px solid transparent;
+            border-radius: 16px;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-main);
+            font-family: inherit;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        input:hover, textarea:hover {
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            background: #ffffff;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+        }
+
+        textarea {
+            height: 120px;
+            resize: vertical;
+        }
+
+        button {
+            width: 100%;
+            padding: 18px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .status-msg {
+            margin-top: 24px;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            display: none;
+            animation: slideUp 0.3s ease;
+        }
+
+        .status-success {
+            background: #ecfdf5;
+            color: #059669;
+            border: 1px solid #a7f3d0;
+        }
+
+        .status-error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        @media (max-width: 600px) {
+            .premium-card { padding: 30px 20px; border-radius: 24px; }
+            .form-row { flex-direction: column; gap: 16px; }
+        }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h2>Form Gửi Email</h2>
+<div class="premium-card">
+    <div class="header">
+        <div class="header-icon">✨</div>
+        <h2>Hệ Thống Gửi Email</h2>
+        <p>Giao thức truyền dữ liệu tốc độ cao</p>
+    </div>
     
-    <form id="emailForm" onsubmit="xuLyGui(event)">
-        <input type="text" id="tieu_de" placeholder="Tiêu đề email" required>
-        <input type="email" id="email_nhan" placeholder="Email người nhận" required>
-        <input type="text" id="nguoi_gui" placeholder="Tên người gửi (Ví dụ: Công ty ABC)" required>
-        <input type="email" id="tra_loi" placeholder="Email nhận phản hồi" required>
+    <form id="emailForm" onsubmit="handleFormSubmit(event)">
         
-        <textarea id="noi_dung" placeholder="Nội dung email (Hỗ trợ HTML)..." required></textarea>
+        <div class="form-group">
+            <label>Tiêu đề thông báo</label>
+            <input type="text" id="tieu_de" placeholder="Nhập tiêu đề tại đây..." required>
+        </div>
+
+        <div class="form-group">
+            <label>Email Người Nhận</label>
+            <input type="email" id="email_nhan" placeholder="ví dụ: khachhang@mail.com" required>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Tên Người Gửi</label>
+                <input type="text" id="nguoi_gui" placeholder="Tên thương hiệu" required>
+            </div>
+            <div class="form-group">
+                <label>Email Phản Hồi</label>
+                <input type="email" id="tra_loi" placeholder="hotro@mail.com" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Nội Dung Chi Tiết</label>
+            <textarea id="noi_dung" placeholder="<h1>Xin chào!</h1><p>Hãy viết nội dung đẹp mắt của bạn...</p>" required></textarea>
+        </div>
         
-        <button type="submit" id="btnSubmit">Gửi Thông Tin</button>
+        <button type="submit" id="btnSubmit">
+            <span>Gửi Ngay Bằng Bot</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+        </button>
     </form>
 
-    <div id="message"></div>
+    <div id="status-message" class="status-msg"></div>
 </div>
 
-<!-- NHẬP FILE JS (Controller) VÀO HTML -->
+<!-- KẾT NỐI FILE JS (Controller) VẪN GIỮ NGUYÊN -->
 <script src="Bot/email.js"></script>
 
 <script>
-    // Hàm này chỉ làm nhiệm vụ giao tiếp giữa Form và file email.js
-    async function xuLyGui(event) {
-        event.preventDefault(); // Ngăn trình duyệt reload
+    async function handleFormSubmit(event) {
+        event.preventDefault(); 
         
         const btn = document.getElementById('btnSubmit');
-        const msg = document.getElementById('message');
+        const msg = document.getElementById('status-message');
+        const btnText = btn.querySelector('span');
         
-        // 1. Thu thập dữ liệu từ các ô nhập
+        // Thu thập dữ liệu
         const t = document.getElementById('tieu_de').value;
         const e = document.getElementById('email_nhan').value;
         const g = document.getElementById('nguoi_gui').value;
         const l = document.getElementById('tra_loi').value;
         const n = document.getElementById('noi_dung').value;
 
-        // 2. Thay đổi trạng thái nút bấm
+        // Trạng thái Loading
         btn.disabled = true;
-        btn.innerText = "Đang gửi...";
-        msg.innerText = "";
+        btnText.innerText = "Đang truyền tải dữ liệu...";
+        msg.style.display = "none";
+        msg.className = "status-msg";
 
-        // 3. ĐẨY DỮ LIỆU ĐÓ SANG CHO FILE Bot/email.js XỬ LÝ
-        // Gọi hàm receiveDataAndSend() đã được định nghĩa trong email.js
-        const thanhCong = await receiveDataAndSend(t, e, g, l, n);
+        // GỌI HÀM TỪ FILE Bot/email.js
+        const success = await receiveDataAndSend(t, e, g, l, n);
 
-        // 4. Nhận kết quả từ email.js trả về và báo cho người dùng
-        if (thanhCong) {
-            msg.style.color = "green";
-            msg.innerText = "✅ Đã gửi email thành công!";
-            // document.getElementById('emailForm').reset(); // Mở comment dòng này nếu muốn gửi xong thì xóa trắng form
+        // Hiển thị kết quả
+        msg.style.display = "block";
+        if (success) {
+            msg.className = "status-msg status-success";
+            msg.innerHTML = `Thành công! Đã gửi mail cho <b>${e}</b> 🎉`;
         } else {
-            msg.style.color = "red";
-            msg.innerText = "❌ Có lỗi xảy ra trong quá trình gửi.";
+            msg.className = "status-msg status-error";
+            msg.innerHTML = "Đã xảy ra lỗi đường truyền. Hãy thử lại!";
         }
 
-        // 5. Khôi phục nút bấm
+        // Khôi phục nút
         btn.disabled = false;
-        btn.innerText = "Gửi Thông Tin";
+        btnText.innerText = "Gửi Ngay Bằng Bot";
     }
 </script>
 
