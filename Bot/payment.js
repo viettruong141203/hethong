@@ -26,6 +26,7 @@ class PaymentAPI {
 
   /**
    * 1. Lệnh Tạo đơn hàng
+   * Trả về: { success: true, data: { id, time, amount, content, status, paymentTime } }
    * @param {number} amount - Số tiền của đơn hàng (vd: 50000)
    * @returns {Promise<Object>}
    */
@@ -35,6 +36,7 @@ class PaymentAPI {
 
   /**
    * 2. Lệnh Kiểm tra trạng thái đơn
+   * Trả về: { success: true, data: { id, time, amount, content, status, paymentTime } }
    * @param {string} id - Mã giao dịch (vd: "261110123456")
    * @returns {Promise<Object>}
    */
@@ -44,6 +46,7 @@ class PaymentAPI {
 
   /**
    * 3. Lệnh Lấy chi tiết 1 đơn hàng
+   * Trả về: { success: true, data: { id, time, amount, content, status, paymentTime } }
    * @param {string} id - Mã giao dịch
    * @returns {Promise<Object>}
    */
@@ -53,6 +56,7 @@ class PaymentAPI {
 
   /**
    * 4. Lệnh Lấy danh sách toàn bộ đơn hàng
+   * Trả về: { success: true, data: [ { id, time, amount, content, status, paymentTime }, ... ] }
    * @returns {Promise<Object>}
    */
   static async getAll() {
@@ -61,6 +65,7 @@ class PaymentAPI {
 
   /**
    * 5. Lệnh Sửa đơn hàng thủ công
+   * Trả về: { success: true, message: "...", data: { id, time, amount, content, status, paymentTime } }
    * @param {string} id - Mã giao dịch cần sửa
    * @param {Object} updateData - Object chứa dữ liệu cần sửa {amount, status, paymentTime}
    * @returns {Promise<Object>}
