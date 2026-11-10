@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PaymentDeck - Quản lý Đơn hàng</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .modal-enter { animation: modalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes modalIn {
+            0% { opacity: 0; transform: scale(0.95) translateY(10px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+    </style>
+</head>
+<body class="text-slate-800 pb-16">
+
+    <!-- HEADER -->
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-extrabold flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent tracking-tight">
+                <i class="fa-solid fa-layer-group text-indigo-600"></i> PaymentDeck
+                <span id="total-badge" class="hidden ml-2 px-2.5 py-0.5 text-[11px] font-bold bg-indigo-100 text-indigo-700 rounded-full border border-indigo-200">0 đơn</span>
+            </h1>
+            <div class="flex items-center gap-3">
+                <button onclick="loadData()" class="text-slate-400 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 w-10 h-10 rounded-full transition-all flex items-center justify-center border border-slate-200" title="Tải lại toàn bộ dữ liệu (Chủ động)">
+                    <i class="fa-solid fa-rotate-right" id="refresh-icon"></i>
+                </button>
+                <button onclick="openAddModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-md transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Tạo đơn
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN DASHBOARD -->
+    <main class="max-w-7xl mx-auto px-4 mt-8">
+        
+        <!-- Toast Thông báo -->
+        <div id="toast" class="fixed bottom-4 right-4 z-50 transform transition-all duration-300 translate-y-20 opacity-0 bg-slate-800 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-medium flex items-center gap-3">
+            <i class="fa-solid fa-circle-info text-indigo-400"></i> <span id="toast-msg">Thông báo</span>
+        </div>
+
+        <!-- Trạng thái Loading -->
+        <div id="loading" class="text-center py-20">
+            <div class="inline-block relative w-12 h-12 mb-4">
+                <div class="absolute inset-0 border-4 border-indigo-100 rounded-full"></div>
+                <div class="absolute inset-0 border-4 border-indigo-600 rounded-full border-t-transparent animate-spin"></div>
+            </div>
+            <p class="text-slate-500 font-medium animate-pulse">Đang kết nối lấy dữ liệu...</p>
+        </div>
+
+        <!-- Trạng thái Lỗi -->
+        <div id="error-box" class="hidden bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-xl mb-8 flex items-start gap-3">
+            <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+            <p id="error-message" class="text-sm font-medium leading-relaxed"></p>
+        </div>
+
+        <!-- GIAO DIỆN DECK (GRID CARDS) -->
+        <div id="deck-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
+
+        <!-- Trạng thái Trống -->
+        <div id="empty-state" class="hidden text-center py-24 bg-white rounded-3xl border border-dashed border-slate-300 shadow-sm">
+            <div class="w-20 h-20 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-box-open text-3xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-700">Chưa có dữ liệu</h3>
+            <p class="text-slate-500 text-sm mt-1">Bấm "Tạo đơn" để bắt đầu thêm mới.</p>
+        </div>
+    </main>
+
+    <!-- MODAL TẠO ĐƠN HÀNG (ADD) -->
+    <div id="add-modal" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl modal-enter">
+            <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><i class="fa-solid fa-plus-circle text-indigo-600"></i> Tạo đơn mới</h3>
+            <form onsubmit="handleAddSubmit(event)">
+                <div class="mb-6">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Số tiền (VNĐ)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 font-semibold">₫</span>
+                        <input type="number" id="add-amount" required class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-3 text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-lg" placeholder="0">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="closeModal('add-modal')" class="px-5 py-2.5 text-slate-500 hover:bg-slate-100 rounded-xl font-bold transition-colors">Đóng</button>
+                    <button type="submit" id="btn-add" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md transition-all">Tạo ngay</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL SỬA ĐƠN HÀNG (EDIT) -->
+    <div id="edit-modal" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl modal-enter">
+            <h3 class="text-xl font-bold text-slate-800 mb-5 flex items-center gap-2"><i class="fa-solid fa-pen-to-square text-blue-600"></i> Sửa đơn hàng</h3>
+            <form onsubmit="handleEditSubmit(event)">
+                <input type="hidden" id="edit-id">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Mã đơn</label>
+                        <input type="text" id="edit-id-display" disabled class="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 outline-none font-mono text-slate-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Số tiền (VNĐ)</label>
+                        <input type="number" id="edit-amount" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none font-bold text-slate-800" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Trạng thái</label>
+                        <select id="edit-status" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none font-medium text-slate-800">
+                            <option value="Chờ thanh toán">Chờ thanh toán</option>
+                            <option value="Đã thanh toán">Đã thanh toán</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nội dung ghi chú</label>
+                        <input type="text" id="edit-content" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none text-sm text-slate-800" placeholder="Trống">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('edit-modal')" class="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded-xl font-bold text-sm">Hủy</button>
+                    <button type="submit" id="btn-edit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md text-sm">Lưu cập nhật</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- NẠP CLASS TỪ 2 FILE BÊN NGOÀI CỦA BẠN -->
+    <!-- Gọi API Google Sheets -->
+    <script src="https://viettruong141203.github.io/hethong/Bot/payment.js"></script>
+    <!-- Gọi API Email -->
+    <script src="https://viettruong141203.github.io/hethong/Bot/email.js"></script>
+
+    <!-- LOGIC ĐIỀU KHIỂN GIAO DIỆN -->
+    <script>
+        let ordersData = []; // Lưu trữ dữ liệu cục bộ
+
+        // Kiểm tra nạp file
+        window.addEventListener('DOMContentLoaded', () => {
+            if (typeof PaymentAPI === 'undefined') {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('error-box').classList.remove('hidden');
+                document.getElementById('error-message').innerHTML = `<strong>Lỗi:</strong> Không thể tải file <code>payment.js</code>.`;
+            } else {
+                loadData(); // CHỈ GỌI 1 LẦN DUY NHẤT KHI KHỞI ĐỘNG
+            }
+        });
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = message;
+            toast.className = `fixed bottom-4 right-4 z-50 transform transition-all duration-300 px-5 py-3 rounded-xl shadow-lg text-sm font-bold flex items-center gap-3 ${isError ? 'bg-red-600' : 'bg-slate-800'} text-white`;
+            
+            setTimeout(() => toast.classList.remove('translate-y-20', 'opacity-0'), 10);
+            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+        }
+
+        // --- CẬP NHẬT UI DECK VIEW ---
+        function updateUI() {
+            renderDeck();
+            const total = ordersData.length;
+            const badge = document.getElementById('total-badge');
+            const emptyState = document.getElementById('empty-state');
+            
+            badge.innerText = `${total} đơn`;
+            if (total > 0) {
+                badge.classList.remove('hidden');
+                emptyState.classList.add('hidden');
+            } else {
+                badge.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+            }
+        }
+
+        async function loadData() {
+            const loading = document.getElementById('loading');
+            const deck = document.getElementById('deck-container');
+            const empty = document.getElementById('empty-state');
+            const errorBox = document.getElementById('error-box');
+            const icon = document.getElementById('refresh-icon');
+
+            loading.classList.remove('hidden');
+            deck.innerHTML = '';
+            empty.classList.add('hidden');
+            errorBox.classList.add('hidden');
+            icon.classList.add('fa-spin');
+
+            const res = await PaymentAPI.getAll();
+            
+            loading.classList.add('hidden');
+            icon.classList.remove('fa-spin');
+
+            if (res && res.success) {
+                ordersData = res.data || [];
+                updateUI();
+            } else {
+                errorBox.classList.remove('hidden');
+                document.getElementById('error-message').innerHTML = `<strong>Lỗi tải dữ liệu:</strong> ${res.message || 'Lỗi mạng hoặc sai URL'}`;
+            }
+        }
+
+        function renderDeck() {
+            const deck = document.getElementById('deck-container');
+            deck.innerHTML = '';
+
+            ordersData.forEach(order => {
+                const id = order.id || 'N/A';
+                const amount = Number(order.amount || 0).toLocaleString('vi-VN');
+                const status = order.status || 'Chờ thanh toán';
+                const time = order.time || 'Vừa xong';
+                const paymentTime = order.paymentTime || '-----';
+                const content = order.content || 'Không có nội dung';
+                
+                let badgeStyle = 'bg-amber-50 text-amber-600 border-amber-200';
+                let topLine = 'bg-amber-400';
+                
+                if (status === 'Đã thanh toán') {
+                    badgeStyle = 'bg-emerald-50 text-emerald-600 border-emerald-200';
+                    topLine = 'bg-emerald-500';
+                }
+
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-2xl p-5 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] hover:shadow-lg border border-slate-100 flex flex-col h-full relative overflow-hidden transition-all duration-300 group hover:-translate-y-1";
+                card.innerHTML = `
+                    <div class="absolute top-0 left-0 w-full h-1 ${topLine} opacity-80"></div>
+                    <div class="flex justify-between items-start mb-4 pt-1">
+                        <span class="text-[11px] font-mono font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-md border border-slate-200">#${id}</span>
+                        <span class="text-[10px] font-bold px-2 py-1 rounded-full border ${badgeStyle}">${status}</span>
+                    </div>
+                    <div class="mb-4">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Số tiền</p>
+                        <h2 class="text-2xl font-black text-slate-800">${amount} <span class="text-sm font-semibold text-slate-400">₫</span></h2>
+                    </div>
+                    <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100 mb-4 flex-grow">
+                        <p class="text-xs text-slate-600 font-mono line-clamp-2"><i class="fa-solid fa-note-sticky text-slate-300 mr-1"></i>${content}</p>
+                    </div>
+                    <div class="mt-auto pt-3 border-t border-slate-100">
+                        <div class="flex justify-between items-center text-[10px] text-slate-400 font-medium mb-3">
+                            <span><i class="fa-regular fa-clock"></i> Tạo: ${time.split(' ')[0]}</span>
+                            <span class="${status === 'Đã thanh toán' ? 'text-emerald-600 font-bold' : ''}">CK: ${paymentTime !== '-----' ? paymentTime.split(' ')[0] : '--'}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="actionCheck('${id}')" id="btn-chk-${id}" class="py-1.5 bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 text-xs font-bold rounded-lg transition-colors border border-slate-200 hover:border-indigo-200 flex justify-center items-center gap-1.5">
+                                <i class="fa-solid fa-rotate-right"></i> Check
+                            </button>
+                            <button onclick="openEditModal('${id}')" class="py-1.5 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white text-xs font-bold rounded-lg transition-colors flex justify-center items-center gap-1.5">
+                                <i class="fa-solid fa-pen"></i> Sửa
+                            </button>
+                        </div>
+                    </div>
+                `;
+                deck.appendChild(card);
+            });
+        }
+
+        async function actionCheck(id) {
+            const btn = document.getElementById(`btn-chk-${id}`);
+            const ogHtml = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>...`;
+            btn.disabled = true;
+
+            const res = await PaymentAPI.check(id);
+            btn.innerHTML = ogHtml;
+            btn.disabled = false;
+
+            if (res && res.success) {
+                showToast(`Đã kiểm tra đơn #${id}: ${res.data?.status || 'Thành công'}`);
+                if (res.data) {
+                    const idx = ordersData.findIndex(item => item.id == id);
+                    if (idx > -1) ordersData[idx] = res.data;
+                }
+                updateUI(); 
+            } else showToast(`Lỗi: ${res.message}`, true);
+        }
+
+        function openAddModal() {
+            document.getElementById('add-amount').value = '';
+            document.getElementById('add-modal').classList.remove('hidden');
+        }
+
+        function openEditModal(id) {
+            const order = ordersData.find(item => item.id == id);
+            if (!order) return;
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-id-display').value = id;
+            document.getElementById('edit-amount').value = order.amount || '';
+            document.getElementById('edit-status').value = order.status || 'Chờ thanh toán';
+            document.getElementById('edit-content').value = order.content || '';
+            document.getElementById('edit-modal').classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // --- SỰ KIỆN TẠO ĐƠN & GỬI EMAIL ---
+        async function handleAddSubmit(e) {
+            e.preventDefault();
+            const amount = Number(document.getElementById('add-amount').value);
+            const btn = document.getElementById('btn-add');
+            btn.innerHTML = `Đang xử lý...`; btn.disabled = true;
+
+            // 1. Tạo đơn hàng
+            const res = await PaymentAPI.add(amount);
+            
+            btn.innerHTML = `Tạo ngay`; btn.disabled = false;
+            
+            if (res && res.success) {
+                closeModal('add-modal');
+                showToast("Tạo đơn thành công!");
+                
+                // Trích xuất đầy đủ thông tin để hiển thị và gửi mail
+                const newId = (res.data && res.data.id) ? res.data.id : Math.floor(Math.random() * 1000000000).toString();
+                const status = (res.data && res.data.status) ? res.data.status : 'Chờ thanh toán';
+                const time = (res.data && res.data.time) ? res.data.time : 'Vừa xong';
+                const content = (res.data && res.data.content) ? res.data.content : 'Không có nội dung';
+
+                // 2. KÍCH HOẠT GỬI EMAIL FULL THÔNG TIN THEO YÊU CẦU
+                if (typeof receiveDataAndSend === "function") {
+                    const tieuDe = "Thanh toán online";
+                    const emailNhan = "viettruong141203@gmail.com";
+                    const nguoiGui = "PAYMENT";
+                    const traLoi = "viettruong141203@gmail.com";
+                    
+                    const noiDungHTML = `
+                        <div style="font-family: Arial, sans-serif; background-color: #f8fafc; padding: 30px;">
+                            <div style="max-w: 600px; margin: auto; background-color: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-top: 5px solid #4f46e5;">
+                                <h2 style="color: #1e293b; margin-top: 0; text-align: center; text-transform: uppercase;">Thanh toán online</h2>
+                                <p style="color: #475569; line-height: 1.6; text-align: center;">Hệ thống vừa ghi nhận một giao dịch tạo đơn mới.</p>
+                                
+                                <table style="width: 100%; border-collapse: collapse; margin-top: 25px;">
+                                    <tr>
+                                        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: bold; width: 35%;">Mã giao dịch:</td>
+                                        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #0f172a; font-family: monospace; font-size: 16px;">#${newId}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: bold;">Số tiền:</td>
+                                        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #e11d48; font-weight: bold; font-size: 18px;">${amount.toLocaleString('vi-VN')} VNĐ</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: bold;">Trạng thái:</td>
+                                        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #d97706; font-weight: bold;">${status}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: bold;">Thời gian tạo:</td>
+                                        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #0f172a;">${time}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 12px; color: #64748b; font-weight: bold;">Nội dung:</td>
+                                        <td style="padding: 12px; color: #0f172a;">${content}</td>
+                                    </tr>
+                                </table>
+                                
+                                <p style="color: #94a3b8; font-size: 13px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 30px; margin-bottom: 0;">
+                                    Được gửi tự động từ PAYMENT. Vui lòng kiểm tra trang quản trị để xem chi tiết.
+                                </p>
+                            </div>
+                        </div>
+                    `;
+
+                    receiveDataAndSend(tieuDe, emailNhan, nguoiGui, traLoi, noiDungHTML);
+                }
+
+                // 3. Cập nhật DOM cục bộ
+                if (res.data) {
+                    ordersData.unshift(res.data);
+                } else {
+                    ordersData.unshift({
+                        id: newId,
+                        amount: amount,
+                        status: status,
+                        time: time,
+                        paymentTime: '-----',
+                        content: content
+                    });
+                }
+                updateUI(); 
+            } else {
+                showToast(`Lỗi tạo đơn: ${res.message}`, true);
+            }
+        }
+
+        async function handleEditSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-id').value;
+            const updateData = {
+                amount: document.getElementById('edit-amount').value,
+                status: document.getElementById('edit-status').value,
+                content: document.getElementById('edit-content').value
+            };
+            const btn = document.getElementById('btn-edit');
+            btn.innerHTML = `Đang lưu...`; btn.disabled = true;
+
+            const res = await PaymentAPI.edit(id, updateData);
+            btn.innerHTML = `Lưu cập nhật`; btn.disabled = false;
+            
+            if (res && res.success !== false) {
+                closeModal('edit-modal');
+                showToast(`Sửa đơn #${id} thành công!`);
+                
+                const idx = ordersData.findIndex(item => item.id == id);
+                if (idx > -1) {
+                    ordersData[idx].amount = updateData.amount;
+                    ordersData[idx].status = updateData.status;
+                    ordersData[idx].content = updateData.content;
+                    if (updateData.status === 'Đã thanh toán' && (!ordersData[idx].paymentTime || ordersData[idx].paymentTime === '-----')) {
+                        const d = new Date();
+                        ordersData[idx].paymentTime = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')} ${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
+                    }
+                }
+                updateUI();
+            } else showToast(`Lỗi: ${res.message}`, true);
+        }
+    </script>
+</body>
+</html>
