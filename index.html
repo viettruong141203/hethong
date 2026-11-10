@@ -5,288 +5,121 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hóa Đơn Thanh Toán</title>
     <style>
-        :root {
-            --vcb-color: #006633; /* Màu xanh Vietcombank */
-            --bg-color: #f3f4f6;
-            --card-bg: #ffffff;
-            --text-main: #1f2937;
-            --text-muted: #6b7280;
-            --border-color: #e5e7eb;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        .bill-card {
-            background: var(--card-bg);
-            width: 100%;
-            max-width: 400px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            overflow: hidden;
-            display: none; /* Ẩn đi cho đến khi load xong dữ liệu */
-        }
-
-        .bill-header {
-            background-color: var(--vcb-color);
-            color: white;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .bill-header h2 {
-            margin: 0;
-            font-size: 20px;
-            font-weight: 600;
-        }
-
-        .bill-amount {
-            text-align: center;
-            padding: 24px 20px;
-            border-bottom: 1px dashed var(--border-color);
-        }
-
-        .bill-amount span {
-            display: block;
-            font-size: 14px;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-        }
-
-        .bill-amount .amount-value {
-            font-size: 32px;
-            font-weight: bold;
-            color: var(--vcb-color);
-            margin: 0;
-        }
-
-        .bill-details {
-            padding: 20px;
-        }
-
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 16px;
-            font-size: 14px;
-        }
-
-        .detail-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .detail-label {
-            color: var(--text-muted);
-            flex-shrink: 0;
-        }
-
-        .detail-value {
-            font-weight: 500;
-            text-align: right;
-            word-break: break-word;
-            padding-left: 15px;
-        }
-
-        .qr-section {
-            text-align: center;
-            padding: 0 20px 20px;
-        }
-
-        .qr-image {
-            width: 200px;
-            height: 200px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 10px;
-            background: white;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 600;
-            background-color: #fef3c7;
-            color: #d97706; /* Màu vàng cam cho "Chờ thanh toán" */
-        }
-        
-        .status-success {
-            background-color: #d1fae5;
-            color: #059669;
-        }
-
-        #loading-state, #error-state {
-            text-align: center;
-            padding: 40px 20px;
-            background: white;
-            border-radius: 12px;
-            max-width: 400px;
-            width: 100%;
-        }
-
-        .copy-btn {
-            background: none;
-            border: none;
-            color: var(--vcb-color);
-            cursor: pointer;
-            font-size: 12px;
-            margin-left: 5px;
-            text-decoration: underline;
-        }
+        :root { --vcb-color: #006633; --bg-color: #f3f4f6; --text-muted: #6b7280; --border: #e5e7eb; }
+        body { font-family: Arial, sans-serif; background: var(--bg-color); margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .bill-card { background: white; width: 100%; max-width: 400px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow: hidden; display: none; }
+        .header { background: var(--vcb-color); color: white; text-align: center; padding: 20px; font-size: 20px; font-weight: bold; }
+        .amount-section { text-align: center; padding: 20px; border-bottom: 1px dashed var(--border); }
+        .amount-val { font-size: 32px; font-weight: bold; color: var(--vcb-color); margin-top: 5px; }
+        .details { padding: 20px; font-size: 14px; }
+        .row { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .row-val { font-weight: bold; text-align: right; word-break: break-all; padding-left: 10px; }
+        .qr-section { text-align: center; padding: 0 20px 20px; }
+        .qr-img { width: 200px; height: 200px; border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; background: #fef3c7; color: #d97706; }
+        .status-success { background: #d1fae5; color: #059669; }
+        #message-box { text-align: center; padding: 40px 20px; background: white; border-radius: 12px; width: 100%; max-width: 400px; }
     </style>
 </head>
 <body>
 
-    <!-- Màn hình chờ -->
-    <div id="loading-state">
-        <h3>Đang tải dữ liệu đơn hàng...</h3>
-    </div>
+    <div id="message-box">Đang tải dữ liệu đơn hàng...</div>
 
-    <!-- Màn hình lỗi -->
-    <div id="error-state" style="display: none; color: #dc2626;">
-        <h3 id="error-message">Lỗi tải dữ liệu</h3>
-    </div>
-
-    <!-- Giao diện Hóa Đơn -->
     <div class="bill-card" id="bill-card">
-        <div class="bill-header">
-            <h2>THÔNG TIN THANH TOÁN</h2>
+        <div class="header">THÔNG TIN THANH TOÁN</div>
+        <div class="amount-section">
+            <span style="color: var(--text-muted); font-size: 14px;">Số tiền cần thanh toán</span>
+            <div class="amount-val" id="bill-amount">0 đ</div>
         </div>
-        
-        <div class="bill-amount">
-            <span>Số tiền cần thanh toán</span>
-            <div class="amount-value" id="bill-amount">0 đ</div>
-        </div>
-
-        <div class="bill-details">
-            <div class="detail-row">
-                <div class="detail-label">Ngân hàng thụ hưởng</div>
-                <div class="detail-value" style="color: var(--vcb-color); font-weight: bold;">Vietcombank</div>
+        <div class="details">
+            <div class="row">
+                <span style="color: var(--text-muted)">Ngân hàng</span>
+                <span class="row-val" style="color: var(--vcb-color)">Vietcombank</span>
             </div>
-            <div class="detail-row">
-                <div class="detail-label">Chủ tài khoản</div>
-                <div class="detail-value">DINH VIET TRUONG</div>
+            <div class="row">
+                <span style="color: var(--text-muted)">Chủ tài khoản</span>
+                <span class="row-val">DINH VIET TRUONG</span>
             </div>
-            <div class="detail-row">
-                <div class="detail-label">Số tài khoản</div>
-                <div class="detail-value">
-                    <span id="stk">TGE60603130946VCB</span>
-                </div>
+            <div class="row">
+                <span style="color: var(--text-muted)">Số tài khoản</span>
+                <span class="row-val">TGE60603130946VCB</span>
             </div>
-            <div class="detail-row">
-                <div class="detail-label">Nội dung chuyển khoản</div>
-                <div class="detail-value">
-                    <span id="bill-content">---</span>
-                </div>
+            <div class="row">
+                <span style="color: var(--text-muted)">Nội dung chuyển khoản</span>
+                <span class="row-val" id="bill-content">---</span>
             </div>
-            <hr style="border: 0; border-top: 1px dashed var(--border-color); margin: 15px 0;">
-            <div class="detail-row">
-                <div class="detail-label">Mã giao dịch</div>
-                <div class="detail-value" id="bill-id">---</div>
+            <hr style="border:0; border-top: 1px dashed var(--border); margin: 15px 0;">
+            <div class="row">
+                <span style="color: var(--text-muted)">Mã giao dịch</span>
+                <span class="row-val" id="bill-id">---</span>
             </div>
-            <div class="detail-row">
-                <div class="detail-label">Thời gian tạo</div>
-                <div class="detail-value" id="bill-time">---</div>
+            <div class="row">
+                <span style="color: var(--text-muted)">Thời gian tạo</span>
+                <span class="row-val" id="bill-time" style="font-weight: normal;">---</span>
             </div>
-            <div class="detail-row">
-                <div class="detail-label">Trạng thái</div>
-                <div class="detail-value">
-                    <span class="status-badge" id="bill-status">---</span>
-                </div>
+            <div class="row">
+                <span style="color: var(--text-muted)">Trạng thái</span>
+                <span class="status-badge" id="bill-status">---</span>
             </div>
         </div>
-
-        <!-- Tự động tạo mã QR VietQR (Tùy chọn) -->
         <div class="qr-section">
-            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">Quét mã QR để thanh toán nhanh</p>
-            <img id="vietqr-img" class="qr-image" src="" alt="Mã QR Thanh Toán" style="display:none;">
+            <img id="qr-img" class="qr-img" src="" alt="Mã QR" style="display:none;">
+            <p style="font-size: 13px; color: var(--text-muted); margin-top:10px;">Quét mã bằng ứng dụng ngân hàng</p>
         </div>
     </div>
 
-    <!-- Nhúng Script API của bạn -->
-    <script src="Bot/payment.js"></script> <!-- Sửa lại đường dẫn file này nếu cần -->
+    <!-- Nhúng file API từ GitHub của bạn -->
+    <script src="https://viettruong141203.github.io/hethong/Bot/payment.js"></script>
 
     <script>
-        // Hàm format tiền tệ VNĐ
-        const formatCurrency = (amount) => {
-            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-        };
+        const formatMoney = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
         document.addEventListener("DOMContentLoaded", () => {
             const urlParams = new URLSearchParams(window.location.search);
             const orderId = urlParams.get('id');
-
-            const loadingState = document.getElementById('loading-state');
-            const errorState = document.getElementById('error-state');
-            const errorMessage = document.getElementById('error-message');
+            const msgBox = document.getElementById('message-box');
             const billCard = document.getElementById('bill-card');
 
             if (!orderId) {
-                loadingState.style.display = 'none';
-                errorState.style.display = 'block';
-                errorMessage.innerText = 'Không tìm thấy ID đơn hàng trên URL. Vui lòng thêm ?id=...';
+                msgBox.innerHTML = '<b style="color:red;">Lỗi: Không tìm thấy ID đơn hàng trên URL (?id=...)</b>';
                 return;
             }
 
-            // Đảm bảo PaymentAPI đã được load
             if (typeof PaymentAPI !== 'undefined') {
-                PaymentAPI.get(orderId)
-                    .then(response => {
-                        loadingState.style.display = 'none';
+                PaymentAPI.get(orderId).then(response => {
+                    if (response.success && response.data) {
+                        msgBox.style.display = 'none';
+                        billCard.style.display = 'block';
 
-                        if (response.success && response.data) {
-                            const data = response.data;
-                            billCard.style.display = 'block';
-
-                            // Đổ dữ liệu JSON vào giao diện HTML
-                            document.getElementById('bill-amount').innerText = formatCurrency(data.soTien);
-                            document.getElementById('bill-id').innerText = data.maGiaoDich;
-                            document.getElementById('bill-time').innerText = data.thoiGianTao;
-                            document.getElementById('bill-content').innerText = data.noiDung;
-
-                            // Xử lý hiển thị màu sắc trạng thái
-                            const statusBadge = document.getElementById('bill-status');
-                            statusBadge.innerText = data.trangThai;
-                            if (data.trangThai.toLowerCase().includes('thành công')) {
-                                statusBadge.classList.remove('status-badge');
-                                statusBadge.classList.add('status-success', 'status-badge');
-                            }
-
-                            // (Tùy chọn) Tạo link ảnh VietQR động dựa trên dữ liệu thật
-                            // Cú pháp VietQR (vietqr.io): https://img.vietqr.io/image/<BANK_ID>-<ACCOUNT_NO>-<TEMPLATE>.png?amount=<AMOUNT>&addInfo=<CONTENT>&accountName=<NAME>
-                            const bankId = 'VCB';
-                            const accNo = 'TGE60603130946VCB';
-                            const accName = 'DINH VIET TRUONG';
-                            const qrUrl = `https://img.vietqr.io/image/${bankId}-${accNo}-compact2.png?amount=${data.soTien}&addInfo=${data.noiDung}&accountName=${encodeURIComponent(accName)}`;
-                            
-                            const qrImg = document.getElementById('vietqr-img');
-                            qrImg.src = qrUrl;
-                            qrImg.style.display = 'inline-block';
-
-                        } else {
-                            errorState.style.display = 'block';
-                            errorMessage.innerText = 'Không tìm thấy dữ liệu cho mã đơn này.';
+                        const data = response.data;
+                        
+                        // Map dữ liệu mới: amount, content, id, time, status
+                        document.getElementById('bill-amount').innerText = formatMoney(data.amount);
+                        document.getElementById('bill-content').innerText = data.content;
+                        document.getElementById('bill-id').innerText = data.id;
+                        document.getElementById('bill-time').innerText = data.time;
+                        
+                        const statusEl = document.getElementById('bill-status');
+                        statusEl.innerText = data.status;
+                        if (data.status.toLowerCase().includes('đã thanh toán') || data.status.toLowerCase().includes('thành công')) {
+                            statusEl.classList.remove('status-badge');
+                            statusEl.classList.add('status-success', 'status-badge');
                         }
-                    })
-                    .catch(error => {
-                        loadingState.style.display = 'none';
-                        errorState.style.display = 'block';
-                        errorMessage.innerText = 'Lỗi kết nối API: ' + error.message;
-                    });
+
+                        // Generate QR
+                        const qrUrl = `https://img.vietqr.io/image/VCB-TGE60603130946VCB-compact2.png?amount=${data.amount}&addInfo=${data.content}&accountName=DINH VIET TRUONG`;
+                        const qrImg = document.getElementById('qr-img');
+                        qrImg.src = qrUrl;
+                        qrImg.style.display = 'inline-block';
+
+                    } else {
+                        msgBox.innerHTML = `<b style="color:red;">Không tìm thấy dữ liệu cho mã đơn: ${orderId}</b><br><br><pre style="text-align:left;">${JSON.stringify(response, null, 2)}</pre>`;
+                    }
+                }).catch(err => {
+                    msgBox.innerHTML = `<b style="color:red;">Lỗi kết nối API: ${err.message}</b>`;
+                });
             } else {
-                loadingState.style.display = 'none';
-                errorState.style.display = 'block';
-                errorMessage.innerText = 'Không thể tải file payment.js';
+                msgBox.innerHTML = '<b style="color:red;">Lỗi: Không tải được payment.js</b>';
             }
         });
     </script>
