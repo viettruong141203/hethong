@@ -21,11 +21,13 @@
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; display: flex; justify-content: center; }
         .container { background-color: var(--card-bg); width: 100%; max-width: 700px; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         h2 { margin-top: 0; margin-bottom: 25px; font-size: 22px; text-align: center; }
+        
         #loadingText { text-align: center; font-weight: 500; color: var(--primary); padding: 15px; background-color: #eff6ff; border-radius: 8px; border: 1px dashed var(--primary); margin-bottom: 20px; }
         #result { padding: 15px; border-radius: 8px; line-height: 1.6; margin-bottom: 20px; }
         #result.success { background-color: var(--success-bg); color: var(--success-text); border: 1px solid #a7f3d0; }
         #result.error { background-color: var(--error-bg); color: var(--error-text); border: 1px solid #fecaca; }
-        .media-wrapper { width: 100%; text-align: center; display: none; }
+        
+        .media-wrapper { width: 100%; text-align: center; display: none; margin-top: 20px; }
         iframe { width: 100%; height: 450px; border: none; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); background-color: #000; }
         a { color: var(--primary); text-decoration: none; font-weight: 500; }
         a:hover { text-decoration: underline; }
@@ -36,94 +38,90 @@
 <div class="container">
     <h2>Trình Xem Ảnh & Video</h2>
     
+    <!-- Các input ẩn để tương thích 100% với file upload.js của bạn -->
+    <div style="display: none;">
+        <input type="text" id="searchId">
+        <input type="file" id="fileInput">
+        <button id="uploadBtn"></button>
+        <button id="fetchBtn"></button>
+        <button id="checkBtn"></button>
+    </div>
+
+    <!-- Div hiển thị trạng thái và dữ liệu Text (do upload.js xử lý) -->
     <div id="loadingText" style="display: none;"></div>
     <div id="result" style="display: none;"></div>
+    
     <div id="errorHint" style="display: none; text-align: center; color: #6b7280; font-size: 14px;">
         Vui lòng thêm tham số <b>?id=MÃ_FILE</b> vào cuối đường dẫn URL.
     </div>
 
-    <!-- Khung hiển thị -->
+    <!-- Khung hiển thị media -->
     <div class="media-wrapper" id="mediaWrapper">
         <iframe id="displayFrame" allow="autoplay" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>
     </div>
 </div>
 
+<!-- 1. Import file JS gốc của bạn -->
+<script src="https://viettruong141203.github.io/hethong/Bot/upload.js"></script>
+
+<!-- 2. Logic trích xuất ID thực và hiển thị -->
 <script>
-    // BƯỚC 1: Dán link Web App của bạn vào đây
-    const WEB_APP_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
-
-    // Hàm lấy ID thực của Google Drive từ link URL bất kỳ
-    function extractDriveId(url) {
-        let match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-        if (match) return match[1];
-        match = url.match(/id=([a-zA-Z0-9_-]+)/);
-        if (match) return match[1];
-        return null; 
-    }
-
     window.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
-        const searchId = urlParams.get('id');
-        
-        const loadingText = document.getElementById('loadingText');
-        const resultDiv = document.getElementById('result');
-        const mediaWrapper = document.getElementById('mediaWrapper');
-        const displayFrame = document.getElementById('displayFrame');
+        const fileId = urlParams.get('id');
 
-        if (!searchId) {
+        if (!fileId) {
             document.getElementById('errorHint').style.display = 'block';
             return;
         }
 
-        // Bắt đầu Fetch dữ liệu
-        loadingText.textContent = "⏳ Đang tra cứu dữ liệu...";
-        loadingText.style.display = 'block';
+        // Bước 1: Điền ID vào input và gọi hàm check có sẵn trong upload.js
+        document.getElementById('searchId').value = fileId;
+        if (typeof checkDataById === 'function') {
+            checkDataById();
+        }
 
-        const payload = { action: "check", sheet: "", id: searchId };
+        // Bước 2: Thiết lập "mắt thần" theo dõi thẻ #result
+        const resultDiv = document.getElementById('result');
+        const mediaWrapper = document.getElementById('mediaWrapper');
+        const displayFrame = document.getElementById('displayFrame');
 
-        fetch(WEB_APP_URL, { 
-            method: "POST", 
-            body: JSON.stringify(payload) 
-        })
-        .then(res => res.json())
-        .then(data => {
-            loadingText.style.display = 'none';
-            resultDiv.style.display = 'block';
+        const observer = new MutationObserver((mutationsList, observer) => {
+            // Nếu resultDiv được upload.js gán class 'success'
+            if (resultDiv.classList.contains('success')) {
+                // Tìm thẻ <a> chứa link Google Drive gốc mà upload.js vừa in ra
+                const linkElement = resultDiv.querySelector('a');
+                
+                if (linkElement && linkElement.href) {
+                    const originalUrl = linkElement.href;
+                    
+                    // Dùng Regex để tách lấy ID chuẩn của Google Drive (Ví dụ: 1A2B3c...)
+                    let realDriveId = null;
+                    let match = originalUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                    if (match) {
+                        realDriveId = match[1];
+                    } else {
+                        match = originalUrl.match(/id=([a-zA-Z0-9_-]+)/);
+                        if (match) realDriveId = match[1];
+                    }
 
-            if (data.status === "success") {
-                // Hiển thị thông tin
-                resultDiv.className = "success";
-                resultDiv.innerHTML = `
-                    <strong>✅ Đã tìm thấy File!</strong><br>
-                    - Phân loại: ${data.data.category}<br>
-                    - Mã ID (Sheet): ${searchId}<br>
-                    - Tên file: ${data.data.fileName}<br>
-                    - Thời gian: ${data.data.time}<br>
-                    - Link truy cập: <a href="${data.data.url}" target="_blank">Mở File Gốc</a>
-                `;
-
-                // Trích xuất ID Drive thực tế từ Link được trả về
-                const realDriveId = extractDriveId(data.data.url);
-
-                if (realDriveId) {
-                    // Nhúng bằng ID thực tế của Google Drive
-                    displayFrame.src = `https://drive.google.com/file/d/${realDriveId}/preview`;
-                    mediaWrapper.style.display = 'block';
-                } else {
-                    resultDiv.innerHTML += `<br><em>⚠️ Không thể nhúng: Link file không đúng định dạng Drive chuẩn.</em>`;
+                    // Nếu tìm thấy ID chuẩn, đưa vào iframe
+                    if (realDriveId) {
+                        displayFrame.src = `https://drive.google.com/file/d/${realDriveId}/preview`;
+                        mediaWrapper.style.display = 'block';
+                        
+                        // Hủy theo dõi sau khi đã chèn xong để tiết kiệm tài nguyên
+                        observer.disconnect(); 
+                    } else {
+                        resultDiv.innerHTML += `<br><em>⚠️ Không thể hiển thị: File không có ID Drive hợp lệ.</em>`;
+                        observer.disconnect();
+                    }
                 }
-
-            } else {
-                resultDiv.className = "error";
-                resultDiv.innerHTML = `<strong>❌ Không tìm thấy:</strong> ${data.message}`;
             }
-        })
-        .catch(err => {
-            loadingText.style.display = 'none';
-            resultDiv.style.display = 'block';
-            resultDiv.className = "error";
-            resultDiv.innerHTML = `<strong>❌ Lỗi kết nối mạng.</strong>`;
         });
+
+        // Kích hoạt theo dõi sự thay đổi của thẻ div#result
+        observer.observe(resultDiv, { attributes: true, childList: true, subtree: true });
     });
 </script>
 
