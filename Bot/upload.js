@@ -1,4 +1,4 @@
-// Thay đổi lại Web App URL nếu cần
+// Thay đổi lại Web App URL
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz1VSNxtdcDVs4ocUBQlzgBKiVrB-WmplJqNiCH3bFS3IGj-w0bx11muCImJr9a0WJMLg/exec";
 
 const resultDiv = document.getElementById('result');
