@@ -3,230 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trình Xem Dữ Liệu</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Trình Xem Media (Tích hợp upload.js)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-color: #f0f2f5;
-            --card-bg: #ffffff;
-            --text-main: #1c1e21;
-            --text-muted: #65676b;
-            --primary: #1877f2;
-            --border: #e4e6eb;
-        }
-
+        /* Giao diện nền */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
+            background-color: #f3f4f6;
             margin: 0;
-            padding: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            color: #1f2937;
         }
 
-        .viewer-card {
-            background: var(--card-bg);
+        /* Khung hiển thị chính */
+        .main-container {
             width: 100%;
             max-width: 800px;
+            background: #fff;
             border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            overflow: hidden;
-            display: none; /* Ẩn cho đến khi có dữ liệu */
-            flex-direction: column;
-        }
-
-        /* Phần thông tin File */
-        .file-header {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             padding: 20px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            box-sizing: border-box;
+            margin: 20px;
         }
 
-        .file-info h3 {
-            margin: 0 0 5px 0;
-            font-size: 18px;
-            color: var(--text-main);
-            word-break: break-all;
+        /* 🔒 VÙNG ẨN: Khóa chặt mọi giao diện thừa của upload.js */
+        #hidden-zone {
+            display: none !important;
+            position: absolute;
+            width: 0; height: 0; overflow: hidden;
         }
 
-        .file-meta {
-            font-size: 14px;
-            color: var(--text-muted);
-            display: flex;
-            gap: 15px;
+        /* Trạng thái Loading */
+        #custom-loading {
+            text-align: center; padding: 40px;
+            font-size: 16px; color: #3b82f6; font-weight: 500;
         }
 
-        .file-meta span {
-            display: inline-flex;
-            align-items: center;
+        /* Trạng thái Lỗi */
+        #custom-error {
+            display: none; text-align: center; padding: 20px;
+            color: #dc2626; background: #fee2e2;
+            border-radius: 8px; font-weight: 500;
         }
 
-        .badge {
-            background-color: #e7f3ff;
-            color: var(--primary);
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
+        /* Thông tin file (được copy từ kết quả của upload.js) */
+        #clean-info {
+            display: none; padding: 15px;
+            background: #f8fafc; border: 1px solid #e2e8f0;
+            border-radius: 8px; margin-bottom: 15px; line-height: 1.6;
         }
 
-        /* Khung hiển thị Google Drive */
-        .media-frame {
-            width: 100%;
-            height: 500px;
-            background-color: #000;
-            position: relative;
+        /* Khung phát Ảnh / Video */
+        .iframe-container {
+            display: none; width: 100%; height: 500px;
+            border-radius: 8px; overflow: hidden;
+            background: #000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
+            width: 100%; height: 100%; border: none;
         }
-
-        /* Hộp thoại thông báo */
-        .status-box {
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            text-align: center;
-            max-width: 400px;
-            width: 100%;
-        }
-
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--primary);
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px auto;
-        }
-
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        .btn-download {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 10px 20px;
-            background-color: var(--primary);
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: 500;
-            font-size: 14px;
-        }
-        .btn-download:hover { background-color: #166fe5; }
     </style>
 </head>
 <body>
 
-    <!-- Thông báo đang tải hoặc lỗi -->
-    <div class="status-box" id="statusBox">
-        <div class="loader" id="loader"></div>
-        <div id="statusText">Đang tìm kiếm dữ liệu...</div>
-    </div>
+    <div class="main-container">
+        <h2 style="margin-top:0; text-align:center;">Trình Xem Dữ Liệu</h2>
+        
+        <!-- Các trạng thái hiển thị cho người dùng -->
+        <div id="custom-loading">⏳ Đang lấy dữ liệu qua hệ thống upload.js...</div>
+        <div id="custom-error"></div>
+        <div id="clean-info"></div>
 
-    <!-- Thẻ giao diện chính (Hiển thị khi thành công) -->
-    <div class="viewer-card" id="viewerCard">
-        <div class="file-header">
-            <div class="file-info">
-                <h3 id="uiFileName">Tên file</h3>
-                <div class="file-meta">
-                    <span id="uiTime">🕒 Thời gian</span>
-                    <span id="uiId">🏷️ ID: ...</span>
-                </div>
-            </div>
-            <div class="badge" id="uiCategory">IMAGE</div>
-        </div>
-        
-        <div class="media-frame">
-            <iframe id="uiFrame" allow="autoplay" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>
-        </div>
-        
-        <!-- Nút dự phòng để mở link gốc nếu iframe bị trình duyệt chặn -->
-        <div style="padding: 15px; text-align: center; background: #fafafa; border-top: 1px solid var(--border);">
-            <a href="#" id="uiDriveLink" target="_blank" class="btn-download">Mở Link Google Drive Gốc</a>
+        <!-- Khung nhúng Google Drive an toàn -->
+        <div class="iframe-container" id="iframe-container">
+            <iframe id="media-frame" allow="autoplay; fullscreen" allowfullscreen="true"></iframe>
         </div>
     </div>
 
+    <!-- ========================================== -->
+    <!-- KHU VỰC ẨN (Dành riêng cho upload.js chạy ngầm) -->
+    <!-- ========================================== -->
+    <div id="hidden-zone">
+        <input type="text" id="searchId">
+        <input type="file" id="fileInput">
+        <button id="uploadBtn"></button>
+        <button id="fetchBtn"></button>
+        <button id="checkBtn"></button>
+        <div id="loadingText"></div>
+        <div id="result"></div>
+    </div>
+
+    <!-- 1. Gọi trực tiếp Script của bạn -->
+    <script src="https://viettruong141203.github.io/hethong/Bot/upload.js"></script>
+
+    <!-- 2. Mã xử lý giao diện -->
     <script>
-        // 🔗 THAY LINK GOOGLE APPS SCRIPT CỦA BẠN VÀO ĐÂY
-        const WEB_APP_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
-
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const fileId = urlParams.get('id');
-            const statusBox = document.getElementById('statusBox');
-            const statusText = document.getElementById('statusText');
-            const loader = document.getElementById('loader');
-            const viewerCard = document.getElementById('viewerCard');
+
+            const customLoading = document.getElementById('custom-loading');
+            const customError = document.getElementById('custom-error');
+            const cleanInfo = document.getElementById('clean-info');
+            const iframeContainer = document.getElementById('iframe-container');
+            const mediaFrame = document.getElementById('media-frame');
 
             if (!fileId) {
-                loader.style.display = 'none';
-                statusText.innerHTML = "⚠️ <strong>Thiếu ID file.</strong><br><br>Vui lòng truy cập bằng đường link có chứa tham số ID.<br>Ví dụ: <em>?id=123456789</em>";
+                customLoading.style.display = 'none';
+                customError.style.display = 'block';
+                customError.innerHTML = '⚠️ Không tìm thấy ID.<br>Vui lòng gắn tham số vào đuôi URL (VD: ?id=MÃ_CỦA_BẠN)';
                 return;
             }
 
-            // Gọi API lấy dữ liệu trực tiếp (Không dùng upload.js)
-            const payload = {
-                action: "check",
-                sheet: "",
-                id: fileId
-            };
+            // Đẩy ID vào ô input ẩn và kích hoạt hàm của upload.js
+            document.getElementById('searchId').value = fileId;
+            if (typeof checkDataById === 'function') {
+                checkDataById();
+            } else {
+                customLoading.style.display = 'none';
+                customError.style.display = 'block';
+                customError.innerHTML = '❌ Lỗi: Không thể kết nối với file upload.js';
+                return;
+            }
 
-            fetch(WEB_APP_URL, { 
-                method: "POST", 
-                body: JSON.stringify(payload) 
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === "success") {
-                    // Trích xuất ID Drive thực từ URL trả về
-                    let realDriveId = null;
-                    let match = data.data.url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-                    if (match) realDriveId = match[1];
-                    else {
-                        match = data.data.url.match(/id=([a-zA-Z0-9_-]+)/);
+            // Lắng nghe kết quả từ thẻ div#result (đang bị ẩn)
+            const resultDiv = document.getElementById('result');
+            
+            const observer = new MutationObserver((mutations) => {
+                // Nếu upload.js báo thành công
+                if (resultDiv.classList.contains('success')) {
+                    observer.disconnect(); // Dừng lắng nghe
+                    customLoading.style.display = 'none';
+
+                    // Trích xuất link Drive từ text kết quả của upload.js
+                    const linkTag = resultDiv.querySelector('a');
+                    if (linkTag && linkTag.href) {
+                        const driveUrl = linkTag.href;
+                        let realDriveId = null;
+                        
+                        // Lọc lấy ID gốc
+                        let match = driveUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
                         if (match) realDriveId = match[1];
-                    }
+                        else {
+                            match = driveUrl.match(/id=([a-zA-Z0-9_-]+)/);
+                            if (match) realDriveId = match[1];
+                        }
 
-                    if (realDriveId) {
-                        // 1. Ẩn thông báo trạng thái
-                        statusBox.style.display = 'none';
-                        
-                        // 2. Điền thông tin vào Card
-                        document.getElementById('uiFileName').textContent = data.data.fileName;
-                        document.getElementById('uiTime').innerHTML = `🕒 ${data.data.time}`;
-                        document.getElementById('uiId').innerHTML = `🏷️ ID: ${fileId}`;
-                        document.getElementById('uiCategory').textContent = data.data.category;
-                        document.getElementById('uiDriveLink').href = data.data.url;
+                        if (realDriveId) {
+                            // Copy Text thông tin lên màn hình chính
+                            cleanInfo.innerHTML = resultDiv.innerHTML;
+                            cleanInfo.style.display = 'block';
 
-                        // 3. Kích hoạt Iframe Google Drive an toàn
-                        document.getElementById('uiFrame').src = `https://drive.google.com/file/d/${realDriveId}/preview`;
-                        
-                        // 4. Hiển thị Card
-                        viewerCard.style.display = 'flex';
-                    } else {
-                        loader.style.display = 'none';
-                        statusText.innerHTML = "⚠️ Lỗi: Link file trong hệ thống không đúng định dạng Google Drive.";
+                            // Chèn ID gốc vào iframe để Google hiển thị Player
+                            mediaFrame.src = `https://drive.google.com/file/d/${realDriveId}/preview`;
+                            iframeContainer.style.display = 'block';
+                        } else {
+                            customError.style.display = 'block';
+                            customError.innerHTML = '⚠️ Lỗi: Link file được lưu không đúng định dạng của Google Drive.';
+                        }
                     }
-                } else {
-                    loader.style.display = 'none';
-                    statusText.innerHTML = `❌ <strong>Không tìm thấy File</strong><br><br>${data.message}`;
+                } 
+                // Nếu upload.js báo lỗi
+                else if (resultDiv.classList.contains('error')) {
+                    observer.disconnect();
+                    customLoading.style.display = 'none';
+                    customError.style.display = 'block';
+                    
+                    // Copy nguyên văn câu báo lỗi từ upload.js sang UI chính
+                    customError.innerHTML = resultDiv.innerHTML; 
                 }
-            })
-            .catch(error => {
-                loader.style.display = 'none';
-                statusText.innerHTML = "❌ <strong>Lỗi kết nối</strong><br><br>Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại mạng.";
             });
+
+            // Quan sát sự thay đổi trong thẻ ẩn
+            observer.observe(resultDiv, { attributes: true, childList: true, subtree: true });
         });
     </script>
 </body>
