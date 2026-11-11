@@ -1,11 +1,10 @@
-// 1. HÀM TẢI FILE LÊN (POST)
+// HÀM 1: TẢI FILE LÊN (POST)
 function uploadFile() {
     const webAppUrl = document.getElementById('webAppUrl').value.trim();
     const fileInput = document.getElementById('fileInput');
     const resultDiv = document.getElementById('result');
     const loadingText = document.getElementById('loadingText');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const fetchBtn = document.getElementById('fetchBtn');
+    const btnElements = [document.getElementById('uploadBtn'), document.getElementById('fetchBtn')];
 
     if (!fileInput.files.length) {
         alert("Vui lòng chọn file trước khi tải lên!");
@@ -16,15 +15,14 @@ function uploadFile() {
     const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
     
     if (file.size > MAX_FILE_SIZE) {
-        alert(`❌ File quá lớn (${(file.size / (1024*1024)).toFixed(1)} MB). Vui lòng chọn file dưới 50MB!`);
+        alert(`❌ File quá lớn (${(file.size / (1024*1024)).toFixed(1)} MB). Google Apps Script chỉ hỗ trợ file < 50MB.`);
         return;
     }
 
     const reader = new FileReader();
 
-    uploadBtn.disabled = true;
-    fetchBtn.disabled = true;
-    loadingText.textContent = "⏳ Đang tải file lên Drive, vui lòng chờ...";
+    btnElements.forEach(btn => btn.disabled = true);
+    loadingText.textContent = "⏳ Đang tải bản gốc lên Drive, vui lòng chờ...";
     loadingText.style.display = 'block';
     resultDiv.style.display = 'none';
 
@@ -41,8 +39,7 @@ function uploadFile() {
         })
         .then(response => response.json())
         .then(data => {
-            uploadBtn.disabled = false;
-            fetchBtn.disabled = false;
+            btnElements.forEach(btn => btn.disabled = false);
             loadingText.style.display = 'none';
             resultDiv.style.display = 'block';
 
@@ -50,10 +47,10 @@ function uploadFile() {
                 resultDiv.className = "success";
                 resultDiv.innerHTML = `
                     <strong>✅ Tải lên thành công!</strong><br>
-                    - <strong>Loại:</strong> ${data.category}<br>
-                    - <strong>Tên file (ID):</strong> ${data.fileName}<br>
-                    - <strong>Thời gian:</strong> ${data.time}<br>
-                    - <strong>Link Drive:</strong> <a href="${data.fileUrl}" target="_blank">Xem file</a>
+                    - <strong>Loại File:</strong> ${data.category}<br>
+                    - <strong>Tên Mới (ID):</strong> ${data.fileName}<br>
+                    - <strong>Thời Gian:</strong> ${data.time}<br>
+                    - <strong>Link Drive:</strong> <a href="${data.fileUrl}" target="_blank">Mở File</a>
                 `;
             } else {
                 resultDiv.className = "error";
@@ -61,28 +58,25 @@ function uploadFile() {
             }
         })
         .catch(error => {
-            uploadBtn.disabled = false;
-            fetchBtn.disabled = false;
+            btnElements.forEach(btn => btn.disabled = false);
             loadingText.style.display = 'none';
             resultDiv.style.display = 'block';
             resultDiv.className = "error";
-            resultDiv.innerHTML = `<strong>❌ Lỗi kết nối:</strong> Không thể tải file.`;
+            resultDiv.innerHTML = `<strong>❌ Lỗi kết nối:</strong> Mạng yếu hoặc file quá nặng.`;
         });
     };
 
     reader.readAsDataURL(file);
 }
 
-// 2. HÀM LẤY TOÀN BỘ DỮ LIỆU (GET)
+// HÀM 2: LẤY TOÀN BỘ DỮ LIỆU (GET)
 function fetchAllData() {
     const webAppUrl = document.getElementById('webAppUrl').value.trim();
     const resultDiv = document.getElementById('result');
     const loadingText = document.getElementById('loadingText');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const fetchBtn = document.getElementById('fetchBtn');
+    const btnElements = [document.getElementById('uploadBtn'), document.getElementById('fetchBtn')];
 
-    uploadBtn.disabled = true;
-    fetchBtn.disabled = true;
+    btnElements.forEach(btn => btn.disabled = true);
     loadingText.textContent = "⏳ Đang lấy dữ liệu từ Google Sheet...";
     loadingText.style.display = 'block';
     resultDiv.style.display = 'none';
@@ -90,8 +84,7 @@ function fetchAllData() {
     fetch(webAppUrl)
         .then(response => response.json())
         .then(data => {
-            uploadBtn.disabled = false;
-            fetchBtn.disabled = false;
+            btnElements.forEach(btn => btn.disabled = false);
             loadingText.style.display = 'none';
             
             if (data.status === "success") {
@@ -102,17 +95,16 @@ function fetchAllData() {
                 resultDiv.className = "success";
                 resultDiv.innerHTML = `
                     <strong>✅ Lấy dữ liệu thành công!</strong><br>
-                    - Tổng số Ảnh: ${data.data.images.length}<br>
-                    - Tổng số Video: ${data.data.videos.length}<br>
-                    <em>* Nhấn F12 (Console) để xem toàn bộ danh sách chi tiết.</em>
+                    - Tổng số Ảnh đã lưu: <strong>${data.data.images.length}</strong><br>
+                    - Tổng số Video đã lưu: <strong>${data.data.videos.length}</strong><br>
+                    <em>* Nhấn F12 (Console) để xem danh sách JSON chi tiết.</em>
                 `;
             } else {
                 alert("Lỗi server: " + data.message);
             }
         })
         .catch(error => {
-            uploadBtn.disabled = false;
-            fetchBtn.disabled = false;
+            btnElements.forEach(btn => btn.disabled = false);
             loadingText.style.display = 'none';
             alert("❌ Lỗi kết nối khi lấy dữ liệu.");
         });
