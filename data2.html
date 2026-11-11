@@ -3,50 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trình Xem Toàn Màn Hình</title>
+    <title>Trình Phát Media Cao Cấp</title>
     <style>
-        /* Xóa bỏ mọi khoảng cách, cài đặt nền đen toàn màn hình */
+        /* Giao diện xem phim tối giản, nền đen tuyệt đối */
         html, body {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
             background-color: #000;
-            overflow: hidden; /* Ẩn thanh cuộn */
-            font-family: Arial, sans-serif;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        /* Giao diện thông báo tải được đặt ở giữa màn hình */
+        /* Hộp thoại thông báo giữa màn hình */
         .message-box {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
             color: #fff;
-            background-color: rgba(31, 41, 55, 0.8);
+            background-color: rgba(20, 20, 20, 0.9);
             padding: 20px 30px;
             border-radius: 8px;
             text-align: center;
             font-size: 16px;
             z-index: 10;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 1px solid #333;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
 
-        /* Khung hiển thị media tràn viền */
-        .media-wrapper {
-            position: absolute;
-            top: 0;
-            left: 0;
+        /* Khung chứa media HTML5 */
+        .media-container {
             width: 100vw;
             height: 100vh;
-            display: none; /* Ẩn cho đến khi có link */
-            z-index: 1;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
         }
 
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
+        /* Tùy chỉnh thẻ video và img gốc */
+        video, img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* Giữ nguyên tỷ lệ gốc, không bị méo */
+            outline: none;
+        }
+
+        /* Tùy chỉnh thanh điều khiển video */
+        video::-webkit-media-controls-panel {
+            background-image: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
         }
     </style>
 </head>
@@ -71,9 +78,14 @@
         ⚠️ Vui lòng thêm tham số <b>?id=MÃ_FILE</b> vào cuối đường dẫn URL.
     </div>
 
-    <!-- Khung xem toàn màn hình -->
-    <div class="media-wrapper" id="mediaWrapper">
-        <iframe id="displayFrame" allow="autoplay; fullscreen" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>
+    <!-- Khung xem media bằng thẻ HTML5 nguyên bản -->
+    <div class="media-container" id="mediaContainer">
+        <!-- Thẻ dùng cho Video -->
+        <video id="html5Video" controls autoplay style="display: none;">
+            Trình duyệt của bạn không hỗ trợ thẻ video.
+        </video>
+        <!-- Thẻ dùng cho Ảnh -->
+        <img id="html5Image" alt="Hình ảnh" style="display: none;">
     </div>
 
     <!-- Import file JS gốc -->
@@ -92,19 +104,20 @@
 
             // Hiển thị trạng thái đang tải
             loadingText.style.display = 'block';
-            loadingText.innerHTML = "⏳ Đang tải dữ liệu media...";
+            loadingText.innerHTML = "⏳ Đang kết nối dữ liệu...";
 
-            // Bắt đầu gọi hàm check
+            // Bắt đầu gọi hàm check trong upload.js
             document.getElementById('searchId').value = fileId;
             if (typeof checkDataById === 'function') {
                 checkDataById();
             }
 
-            // Theo dõi kết quả trả về từ upload.js
             const resultDiv = document.getElementById('result');
-            const mediaWrapper = document.getElementById('mediaWrapper');
-            const displayFrame = document.getElementById('displayFrame');
+            const mediaContainer = document.getElementById('mediaContainer');
+            const html5Video = document.getElementById('html5Video');
+            const html5Image = document.getElementById('html5Image');
 
+            // Theo dõi kết quả trả về từ upload.js
             const observer = new MutationObserver((mutationsList, observer) => {
                 if (resultDiv.classList.contains('success')) {
                     const linkElement = resultDiv.querySelector('a');
@@ -112,6 +125,7 @@
                     if (linkElement && linkElement.href) {
                         const originalUrl = linkElement.href;
                         
+                        // Lấy ID Drive thực
                         let realDriveId = null;
                         let match = originalUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
                         if (match) {
@@ -122,11 +136,25 @@
                         }
 
                         if (realDriveId) {
-                            // Cấp link cho iframe và hiển thị tràn màn hình
-                            displayFrame.src = `https://drive.google.com/file/d/${realDriveId}/preview`;
-                            mediaWrapper.style.display = 'block';
+                            // Tạo link tải trực tiếp (Direct Link) từ Google Drive
+                            const directLink = `https://drive.google.com/uc?export=download&id=${realDriveId}`;
                             
-                            // Ẩn hộp thoại loading
+                            // Đọc Text để phân biệt đây là Ảnh hay Video
+                            const textContent = resultDiv.innerText.toUpperCase();
+                            const isVideo = textContent.includes('VIDEO') || textContent.includes('.MP4') || textContent.includes('.MOV');
+
+                            if (isVideo) {
+                                // Nếu là Video: Gán link vào thẻ <video>
+                                html5Video.src = directLink;
+                                html5Video.style.display = 'block';
+                            } else {
+                                // Nếu là Ảnh: Gán link vào thẻ <img>
+                                html5Image.src = directLink;
+                                html5Image.style.display = 'block';
+                            }
+
+                            // Hiển thị container và ẩn thông báo
+                            mediaContainer.style.display = 'flex';
                             loadingText.style.display = 'none';
                             
                             observer.disconnect(); 
