@@ -3,183 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trình Phát Video Cao Cấp</title>
-    
-    <!-- Tích hợp CSS của Plyr Player -->
-    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
-    
+    <title>Trình Xem Dữ Liệu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Nền rạp chiếu phim (Theater Mode) */
-        html, body {
-            margin: 0; padding: 0; width: 100%; height: 100%;
-            background-color: #0f0f0f; color: #fff;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            display: flex; justify-content: center; align-items: center;
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-main: #1c1e21;
+            --text-muted: #65676b;
+            --primary: #1877f2;
+            --border: #e4e6eb;
         }
 
-        /* 🔒 Ép ẩn tuyệt đối UI của upload.js để không bị vỡ giao diện */
-        #hidden-upload-ui, #result, #loadingText {
-            display: none !important; position: absolute; left: -9999px;
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
 
-        /* Khung trạng thái */
-        #statusViewer {
-            position: absolute; z-index: 10;
-            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px);
-            padding: 15px 25px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
-            font-size: 16px; font-weight: 500;
+        .viewer-card {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 800px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+            display: none; /* Ẩn cho đến khi có dữ liệu */
+            flex-direction: column;
+        }
+
+        /* Phần thông tin File */
+        .file-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-info h3 {
+            margin: 0 0 5px 0;
+            font-size: 18px;
+            color: var(--text-main);
+            word-break: break-all;
+        }
+
+        .file-meta {
+            font-size: 14px;
+            color: var(--text-muted);
+            display: flex;
+            gap: 15px;
+        }
+
+        .file-meta span {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .badge {
+            background-color: #e7f3ff;
+            color: var(--primary);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Khung hiển thị Google Drive */
+        .media-frame {
+            width: 100%;
+            height: 500px;
+            background-color: #000;
+            position: relative;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Hộp thoại thông báo */
+        .status-box {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
             text-align: center;
+            max-width: 400px;
+            width: 100%;
         }
 
-        /* Container chứa Media */
-        .media-container {
-            width: 100%; max-width: 1000px; /* Độ rộng rạp chiếu */
-            border-radius: 12px; overflow: hidden;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-            display: none; /* Ẩn đến khi có dữ liệu */
-            background: #000;
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px auto;
         }
 
-        /* Tùy chỉnh ảnh nếu file là ảnh */
-        #displayImage {
-            width: 100%; max-height: 85vh; object-fit: contain; display: none;
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Nút dự phòng trường hợp Google Drive chặn file nặng */
-        .fallback-btn {
-            display: block; width: fit-content; margin: 20px auto;
-            padding: 10px 20px; background: #3b82f6; color: white;
-            text-decoration: none; border-radius: 6px; font-weight: bold;
+        .btn-download {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 14px;
         }
-        .fallback-btn:hover { background: #2563eb; }
+        .btn-download:hover { background-color: #166fe5; }
     </style>
 </head>
 <body>
 
-    <!-- KHU VỰC ẨN: Chứa các input mồi cho upload.js -->
-    <div id="hidden-upload-ui">
-        <input type="text" id="searchId">
-        <input type="file" id="fileInput">
-        <button id="uploadBtn"></button>
-        <button id="fetchBtn"></button>
-        <button id="checkBtn"></button>
-        <div id="loadingText"></div>
-        <div id="result"></div>
+    <!-- Thông báo đang tải hoặc lỗi -->
+    <div class="status-box" id="statusBox">
+        <div class="loader" id="loader"></div>
+        <div id="statusText">Đang tìm kiếm dữ liệu...</div>
     </div>
 
-    <!-- Thông báo hiển thị -->
-    <div id="statusViewer">
-        ⏳ Đang tải dữ liệu media...<br>
-        <span style="font-size: 13px; color: #aaa;">(Có thể mất vài giây)</span>
-    </div>
-
-    <!-- Khung phát Media (Plyr Video hoặc Ảnh) -->
-    <div class="media-container" id="mediaContainer">
+    <!-- Thẻ giao diện chính (Hiển thị khi thành công) -->
+    <div class="viewer-card" id="viewerCard">
+        <div class="file-header">
+            <div class="file-info">
+                <h3 id="uiFileName">Tên file</h3>
+                <div class="file-meta">
+                    <span id="uiTime">🕒 Thời gian</span>
+                    <span id="uiId">🏷️ ID: ...</span>
+                </div>
+            </div>
+            <div class="badge" id="uiCategory">IMAGE</div>
+        </div>
         
-        <!-- Khung cho Video (Dùng Plyr) -->
-        <video id="player" playsinline controls style="display: none;">
-            <!-- Source sẽ được JS nạp vào -->
-        </video>
-
-        <!-- Khung cho Ảnh -->
-        <img id="displayImage" alt="Hình ảnh xem trước">
-
-        <!-- Nút tải/xem gốc hiện ra nếu video bị lỗi (VD file quá 100MB) -->
-        <div id="fallbackArea" style="display: none; padding: 20px; text-align: center;">
-            <p style="color: #ff4d4d; margin-bottom: 15px;">⚠️ Trình duyệt không thể phát trực tiếp video này do giới hạn của Google Drive (thường do file quá nặng).</p>
-            <a href="#" id="fallbackLink" target="_blank" class="fallback-btn">👉 Bấm vào đây để Xem gốc / Tải xuống</a>
+        <div class="media-frame">
+            <iframe id="uiFrame" allow="autoplay" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>
+        </div>
+        
+        <!-- Nút dự phòng để mở link gốc nếu iframe bị trình duyệt chặn -->
+        <div style="padding: 15px; text-align: center; background: #fafafa; border-top: 1px solid var(--border);">
+            <a href="#" id="uiDriveLink" target="_blank" class="btn-download">Mở Link Google Drive Gốc</a>
         </div>
     </div>
 
-    <!-- 1. Import Thư viện Plyr & JS upload của bạn -->
-    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
-    <script src="https://viettruong141203.github.io/hethong/Bot/upload.js"></script>
-
-    <!-- 2. Script Xử lý logic -->
     <script>
+        // 🔗 THAY LINK GOOGLE APPS SCRIPT CỦA BẠN VÀO ĐÂY
+        const WEB_APP_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const fileId = urlParams.get('id');
-            const statusViewer = document.getElementById('statusViewer');
+            const statusBox = document.getElementById('statusBox');
+            const statusText = document.getElementById('statusText');
+            const loader = document.getElementById('loader');
+            const viewerCard = document.getElementById('viewerCard');
 
             if (!fileId) {
-                statusViewer.innerHTML = "⚠️ Lỗi: Không tìm thấy ID.<br>Ví dụ: ?id=1A2B3C4D";
+                loader.style.display = 'none';
+                statusText.innerHTML = "⚠️ <strong>Thiếu ID file.</strong><br><br>Vui lòng truy cập bằng đường link có chứa tham số ID.<br>Ví dụ: <em>?id=123456789</em>";
                 return;
             }
 
-            // Kích hoạt hàm upload.js
-            document.getElementById('searchId').value = fileId;
-            if (typeof checkDataById === 'function') {
-                checkDataById();
-            }
+            // Gọi API lấy dữ liệu trực tiếp (Không dùng upload.js)
+            const payload = {
+                action: "check",
+                sheet: "",
+                id: fileId
+            };
 
-            const resultDiv = document.getElementById('result');
-            const mediaContainer = document.getElementById('mediaContainer');
-            const videoElement = document.getElementById('player');
-            const imageElement = document.getElementById('displayImage');
-            const fallbackArea = document.getElementById('fallbackArea');
-            const fallbackLink = document.getElementById('fallbackLink');
-
-            const observer = new MutationObserver((mutationsList, observer) => {
-                if (resultDiv.classList.contains('success')) {
-                    const linkElement = resultDiv.querySelector('a');
-                    const textContent = resultDiv.innerText.toUpperCase();
-                    
-                    if (linkElement && linkElement.href) {
-                        const originalUrl = linkElement.href;
-                        let realDriveId = null;
-                        
-                        let match = originalUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            fetch(WEB_APP_URL, { 
+                method: "POST", 
+                body: JSON.stringify(payload) 
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "success") {
+                    // Trích xuất ID Drive thực từ URL trả về
+                    let realDriveId = null;
+                    let match = data.data.url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                    if (match) realDriveId = match[1];
+                    else {
+                        match = data.data.url.match(/id=([a-zA-Z0-9_-]+)/);
                         if (match) realDriveId = match[1];
-                        else {
-                            match = originalUrl.match(/id=([a-zA-Z0-9_-]+)/);
-                            if (match) realDriveId = match[1];
-                        }
-
-                        if (realDriveId) {
-                            const directLink = `https://drive.google.com/uc?export=download&id=${realDriveId}`;
-                            const isVideo = textContent.includes('VIDEO') || textContent.includes('.MP4');
-
-                            mediaContainer.style.display = "block";
-                            statusViewer.style.display = "none";
-                            
-                            // Gắn link dự phòng để người dùng bấm nếu video không chạy
-                            fallbackLink.href = originalUrl;
-
-                            if (isVideo) {
-                                videoElement.style.display = "block";
-                                videoElement.src = directLink;
-                                
-                                // Khởi tạo giao diện Video Player cao cấp (Plyr)
-                                const player = new Plyr('#player', {
-                                    controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'settings', 'fullscreen'],
-                                    settings: ['speed']
-                                });
-
-                                // Bắt lỗi nếu Google Drive chặn phát trực tiếp (Màn hình đen / Bể icon)
-                                videoElement.addEventListener('error', () => {
-                                    document.querySelector('.plyr').style.display = 'none';
-                                    fallbackArea.style.display = 'block';
-                                });
-                            } else {
-                                imageElement.style.display = "block";
-                                imageElement.src = directLink;
-
-                                imageElement.addEventListener('error', () => {
-                                    imageElement.style.display = 'none';
-                                    fallbackArea.style.display = 'block';
-                                });
-                            }
-                            observer.disconnect(); 
-                        }
                     }
-                } else if (resultDiv.classList.contains('error')) {
-                    statusViewer.innerHTML = "❌ Lỗi: File không tồn tại hoặc đã bị xóa.";
-                    observer.disconnect();
-                }
-            });
 
-            observer.observe(resultDiv, { attributes: true, childList: true, subtree: true });
+                    if (realDriveId) {
+                        // 1. Ẩn thông báo trạng thái
+                        statusBox.style.display = 'none';
+                        
+                        // 2. Điền thông tin vào Card
+                        document.getElementById('uiFileName').textContent = data.data.fileName;
+                        document.getElementById('uiTime').innerHTML = `🕒 ${data.data.time}`;
+                        document.getElementById('uiId').innerHTML = `🏷️ ID: ${fileId}`;
+                        document.getElementById('uiCategory').textContent = data.data.category;
+                        document.getElementById('uiDriveLink').href = data.data.url;
+
+                        // 3. Kích hoạt Iframe Google Drive an toàn
+                        document.getElementById('uiFrame').src = `https://drive.google.com/file/d/${realDriveId}/preview`;
+                        
+                        // 4. Hiển thị Card
+                        viewerCard.style.display = 'flex';
+                    } else {
+                        loader.style.display = 'none';
+                        statusText.innerHTML = "⚠️ Lỗi: Link file trong hệ thống không đúng định dạng Google Drive.";
+                    }
+                } else {
+                    loader.style.display = 'none';
+                    statusText.innerHTML = `❌ <strong>Không tìm thấy File</strong><br><br>${data.message}`;
+                }
+            })
+            .catch(error => {
+                loader.style.display = 'none';
+                statusText.innerHTML = "❌ <strong>Lỗi kết nối</strong><br><br>Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại mạng.";
+            });
         });
     </script>
 </body>
