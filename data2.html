@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tra Cứu Hình Ảnh Bằng ID</title>
+    <title>Xem Ảnh và Video</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -31,7 +31,7 @@
         .container {
             background-color: var(--card-bg);
             width: 100%;
-            max-width: 600px;
+            max-width: 700px; /* Mở rộng một chút để xem video thoải mái hơn */
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -42,50 +42,6 @@
             margin-bottom: 25px;
             font-size: 22px;
             text-align: center;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .input-group label {
-            font-weight: 600;
-            color: var(--text-main);
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-            font-size: 15px;
-        }
-
-        input[type="text"]:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        button {
-            padding: 12px 16px;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 15px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        button:hover {
-            background-color: #2563eb;
         }
 
         #loadingText {
@@ -114,70 +70,86 @@
             text-align: center;
             border-top: 1px solid var(--border);
             padding-top: 20px;
+            display: none; /* Ẩn cho đến khi có ID */
         }
 
-        img {
-            max-width: 100%;
-            max-height: 50vh;
+        /* Tối ưu khung iframe cho cả ảnh và video */
+        iframe {
+            width: 100%;
+            height: 450px;
+            border: none;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            background-color: #000; /* Nền đen giúp video nhìn đẹp hơn */
+        }
+        
+        .hint {
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Tra Cứu Dữ Liệu & Hình Ảnh</h2>
+    <h2>Trình Xem Ảnh & Video</h2>
 
-    <!-- Các phần tử ẩn để tương thích hoàn toàn với upload.js -->
+    <!-- Các phần tử ẩn để tương thích hoàn toàn với file upload.js -->
     <div style="display: none;">
+        <input type="text" id="searchId">
         <input type="file" id="fileInput">
         <button id="uploadBtn"></button>
         <button id="fetchBtn"></button>
-    </div>
-
-    <!-- Cột nhập ID -->
-    <div class="input-group">
-        <label for="searchId">Mã ID Hình ảnh / Video:</label>
-        <input type="text" id="searchId" placeholder="Dán ID từ Google Drive vào đây...">
-        <!-- Nút gọi hàm kết hợp -->
-        <button id="checkBtn" onclick="viewDataAndImage()">Lấy Dữ Liệu & Xem Ảnh</button>
+        <button id="checkBtn"></button>
     </div>
 
     <!-- Nơi hiển thị trạng thái và Text từ file JS -->
     <div id="loadingText" style="display: none;"></div>
     <div id="result" style="display: none;"></div>
+    <div id="errorHint" class="hint" style="display: none;">
+        Vui lòng thêm tham số <b>?id=MÃ_FILE</b> vào cuối đường dẫn URL.
+    </div>
 
-    <!-- Nơi hiển thị Hình Ảnh -->
-    <div class="media-wrapper" id="mediaWrapper" style="display: none;">
-        <img id="displayImage" alt="Hình ảnh xem trước">
+    <!-- Khung hiển thị Ảnh hoặc Video -->
+    <div class="media-wrapper" id="mediaWrapper">
+        <iframe id="displayFrame" allow="autoplay" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>
     </div>
 </div>
 
-<!-- Tải mã JS của bạn từ GitHub -->
+<!-- Tải mã JS gốc của bạn -->
 <script src="https://viettruong141203.github.io/hethong/Bot/upload.js"></script>
 
-<!-- Script xử lý hiển thị ảnh song song với việc lấy dữ liệu -->
+<!-- Script xử lý URL và nhúng -->
 <script>
-    function viewDataAndImage() {
-        const fileId = document.getElementById('searchId').value.trim();
-        const mediaWrapper = document.getElementById('mediaWrapper');
-        const displayImage = document.getElementById('displayImage');
+    window.addEventListener('DOMContentLoaded', () => {
+        // Lấy ID từ URL (VD: domain.com/view.html?id=123abc456def)
+        const urlParams = new URLSearchParams(window.location.search);
+        const fileId = urlParams.get('id');
 
-        if (!fileId) {
-            alert("Vui lòng nhập ID cần tra cứu!");
-            return;
+        if (fileId) {
+            // 1. Điền ID vào ô input ẩn để hàm checkDataById() có thể đọc được
+            document.getElementById('searchId').value = fileId;
+            
+            // 2. Gọi hàm checkDataById() có sẵn trong upload.js
+            if (typeof checkDataById === 'function') {
+                checkDataById();
+            }
+
+            // 3. Sử dụng endpoint /preview của Drive (Hỗ trợ tốt nhất cho cả Ảnh và Video)
+            const iframeUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+            
+            const mediaWrapper = document.getElementById('mediaWrapper');
+            const displayFrame = document.getElementById('displayFrame');
+            
+            displayFrame.src = iframeUrl;
+            mediaWrapper.style.display = 'block';
+        } else {
+            // Hiển thị hướng dẫn nếu truy cập không có ID
+            document.getElementById('errorHint').style.display = 'block';
         }
-
-        // 1. Gọi hàm checkDataById() có sẵn trong upload.js để lấy text
-        if (typeof checkDataById === 'function') {
-            checkDataById();
-        }
-
-        // 2. Tự động tạo link nhúng từ ID và hiển thị ảnh bên dưới
-        displayImage.src = 'https://drive.google.com/uc?export=view&id=' + fileId;
-        mediaWrapper.style.display = 'block';
-    }
+    });
 </script>
 
 </body>
