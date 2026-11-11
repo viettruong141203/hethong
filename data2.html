@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi Tiết Dữ Liệu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --primary: #3b82f6;
+            --success-text: #065f46;
+            --error-text: #991b1b;
+            --border: #e5e7eb;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 800px;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 22px;
+            color: var(--text-main);
+        }
+
+        #status {
+            padding: 15px;
+            font-weight: 500;
+            color: var(--primary);
+            background-color: #eff6ff;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+
+        #status.error {
+            color: var(--error-text);
+            background-color: #fee2e2;
+        }
+
+        .data-info {
+            text-align: left;
+            background-color: #f9fafb;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: none; /* Ẩn cho đến khi có dữ liệu */
+        }
+
+        .data-info p {
+            margin: 8px 0;
+            font-size: 15px;
+        }
+
+        .media-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            display: none; /* Ẩn cho đến khi có dữ liệu */
+        }
+
+        img {
+            max-width: 100%;
+            max-height: 60vh;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            object-fit: contain;
+        }
+
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Thông Tin File Chi Tiết</h2>
+    <div id="status">⏳ Đang đọc ID và lấy dữ liệu từ hệ thống...</div>
+    
+    <div class="data-info" id="dataInfo">
+        <!-- Thông tin lấy từ API sẽ được chèn vào đây -->
+    </div>
+
+    <div class="media-wrapper" id="mediaWrapper">
+        <img id="displayImage" alt="Hình ảnh được nhúng">
+    </div>
+</div>
+
+<script>
+    // BƯỚC 1: Cấu hình URL Web App (Giống file upload.js)
+    const WEB_APP_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec'; 
+
+    const statusDiv = document.getElementById('status');
+    const dataInfoDiv = document.getElementById('dataInfo');
+    const mediaWrapperDiv = document.getElementById('mediaWrapper');
+    const imageElement = document.getElementById('displayImage');
+
+    // BƯỚC 2: Lấy ID từ URL (VD: ?id=abc123xyz)
+    const urlParams = new URLSearchParams(window.location.search);
+    const fileId = urlParams.get('id');
+
+    if (!fileId) {
+        statusDiv.className = 'error';
+        statusDiv.innerHTML = '⚠️ Không tìm thấy ID.<br>Vui lòng truy cập với định dạng: <em>?id=YOUR_FILE_ID</em>';
+    } else {
+        // BƯỚC 3: Gọi API để lấy thông tin chi tiết của ID này
+        fetchDataFromId(fileId);
+    }
+
+    function fetchDataFromId(id) {
+        // Payload giống hàm checkDataById() trong mã của bạn
+        const payload = {
+            action: "check",
+            sheet: "",
+            id: id
+        };
+
+        fetch(WEB_APP_URL, { 
+            method: "POST", 
+            body: JSON.stringify(payload) 
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "success") {
+                // Tắt thông báo trạng thái
+                statusDiv.style.display = 'none';
+
+                // Hiển thị thông tin văn bản
+                dataInfoDiv.style.display = 'block';
+                dataInfoDiv.innerHTML = `
+                    <p><strong>🏷️ Phân loại:</strong> ${data.data.category}</p>
+                    <p><strong>📄 Tên file:</strong> ${data.data.fileName}</p>
+                    <p><strong>🕒 Thời gian:</strong> ${data.data.time}</p>
+                    <p><strong>🔗 Link gốc:</strong> <a href="${data.data.url}" target="_blank">Xem trên Drive</a></p>
+                `;
+
+                // Hiển thị hình ảnh nhúng (Sử dụng URL trực tiếp từ Drive thông qua ID)
+                mediaWrapperDiv.style.display = 'flex';
+                imageElement.src = `https://drive.google.com/uc?export=view&id=${id}`;
+                
+            } else {
+                statusDiv.className = 'error';
+                statusDiv.innerHTML = `<strong>❌ Không tìm thấy dữ liệu:</strong> ${data.message}`;
+            }
+        })
+        .catch(error => {
+            statusDiv.className = 'error';
+            statusDiv.innerHTML = `<strong>❌ Lỗi kết nối.</strong> Không thể lấy dữ liệu từ Server.`;
+        });
+    }
+</script>
+
+</body>
+</html>
