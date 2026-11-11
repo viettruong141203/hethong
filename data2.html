@@ -3,130 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trình Phát Media Cao Cấp</title>
+    <title>Trình Xem Dữ Liệu Toàn Màn Hình</title>
     <style>
-        /* Giao diện xem phim tối giản, nền đen tuyệt đối */
+        /* Xóa viền, làm nền đen toàn màn hình */
         html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #000;
-            overflow: hidden;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #000; color: #fff;
+            font-family: Arial, sans-serif; overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
         }
 
-        /* Hộp thoại thông báo giữa màn hình */
-        .message-box {
+        /* 🔒 QUAN TRỌNG: Ép ẩn tuyệt đối mọi thứ của file upload.js */
+        #hidden-upload-ui, #result, #loadingText {
+            display: none !important;
             position: absolute;
-            color: #fff;
-            background-color: rgba(20, 20, 20, 0.9);
-            padding: 20px 30px;
-            border-radius: 8px;
-            text-align: center;
-            font-size: 16px;
-            z-index: 10;
-            border: 1px solid #333;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            left: -9999px;
+            opacity: 0;
+            pointer-events: none;
         }
 
-        /* Khung chứa media HTML5 */
-        .media-container {
-            width: 100vw;
-            height: 100vh;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            background-color: #000;
+        /* Khung thông báo trạng thái của trang này */
+        #statusViewer {
+            position: absolute; z-index: 10;
+            background: rgba(31, 41, 55, 0.9);
+            padding: 15px 25px; border-radius: 8px;
+            font-size: 16px; font-weight: bold;
         }
 
-        /* Tùy chỉnh thẻ video và img gốc */
-        video, img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain; /* Giữ nguyên tỷ lệ gốc, không bị méo */
-            outline: none;
-        }
-
-        /* Tùy chỉnh thanh điều khiển video */
-        video::-webkit-media-controls-panel {
-            background-image: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+        /* Khung phát iframe toàn màn hình */
+        iframe {
+            width: 100vw; height: 100vh; border: none;
+            display: none; /* Ẩn cho đến khi có dữ liệu */
         }
     </style>
 </head>
 <body>
 
-    <!-- Các input ẩn để tương thích 100% với file upload.js -->
-    <div style="display: none;">
+    <!-- KHU VỰC ẨN: Chứa các ID mồi cho file upload.js hoạt động mà không gây lỗi giao diện -->
+    <div id="hidden-upload-ui">
         <input type="text" id="searchId">
         <input type="file" id="fileInput">
         <button id="uploadBtn"></button>
         <button id="fetchBtn"></button>
         <button id="checkBtn"></button>
+        <div id="loadingText"></div>
+        <div id="result"></div>
     </div>
 
-    <!-- Hộp thoại thông báo trạng thái -->
-    <div id="loadingText" class="message-box" style="display: none;"></div>
-    
-    <!-- Div kết quả ẩn (Chỉ dùng để mượn dữ liệu từ upload.js) -->
-    <div id="result" style="display: none;"></div>
-    
-    <div id="errorHint" class="message-box" style="display: none;">
-        ⚠️ Vui lòng thêm tham số <b>?id=MÃ_FILE</b> vào cuối đường dẫn URL.
-    </div>
+    <!-- Thông báo hiển thị cho người dùng -->
+    <div id="statusViewer">⏳ Đang kết nối dữ liệu, vui lòng chờ...</div>
 
-    <!-- Khung xem media bằng thẻ HTML5 nguyên bản -->
-    <div class="media-container" id="mediaContainer">
-        <!-- Thẻ dùng cho Video -->
-        <video id="html5Video" controls autoplay style="display: none;">
-            Trình duyệt của bạn không hỗ trợ thẻ video.
-        </video>
-        <!-- Thẻ dùng cho Ảnh -->
-        <img id="html5Image" alt="Hình ảnh" style="display: none;">
-    </div>
+    <!-- Khung xem chính -->
+    <iframe id="displayFrame" allow="autoplay; fullscreen" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>
 
-    <!-- Import file JS gốc -->
+    <!-- Import file JS gốc của bạn -->
     <script src="https://viettruong141203.github.io/hethong/Bot/upload.js"></script>
 
     <script>
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const fileId = urlParams.get('id');
-            const loadingText = document.getElementById('loadingText');
+            const statusViewer = document.getElementById('statusViewer');
 
             if (!fileId) {
-                document.getElementById('errorHint').style.display = 'block';
+                statusViewer.innerHTML = "⚠️ Lỗi: Thiếu ID.<br>Vui lòng thêm ?id=MÃ_FILE vào URL.";
                 return;
             }
 
-            // Hiển thị trạng thái đang tải
-            loadingText.style.display = 'block';
-            loadingText.innerHTML = "⏳ Đang kết nối dữ liệu...";
-
-            // Bắt đầu gọi hàm check trong upload.js
+            // Gọi hàm từ upload.js
             document.getElementById('searchId').value = fileId;
             if (typeof checkDataById === 'function') {
                 checkDataById();
             }
 
+            // Theo dõi kết quả ngầm
             const resultDiv = document.getElementById('result');
-            const mediaContainer = document.getElementById('mediaContainer');
-            const html5Video = document.getElementById('html5Video');
-            const html5Image = document.getElementById('html5Image');
+            const displayFrame = document.getElementById('displayFrame');
 
-            // Theo dõi kết quả trả về từ upload.js
             const observer = new MutationObserver((mutationsList, observer) => {
                 if (resultDiv.classList.contains('success')) {
                     const linkElement = resultDiv.querySelector('a');
                     
                     if (linkElement && linkElement.href) {
                         const originalUrl = linkElement.href;
-                        
-                        // Lấy ID Drive thực
                         let realDriveId = null;
+                        
+                        // Regex trích xuất ID Drive
                         let match = originalUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
                         if (match) {
                             realDriveId = match[1];
@@ -136,42 +98,25 @@
                         }
 
                         if (realDriveId) {
-                            // Tạo link tải trực tiếp (Direct Link) từ Google Drive
-                            const directLink = `https://drive.google.com/uc?export=download&id=${realDriveId}`;
-                            
-                            // Đọc Text để phân biệt đây là Ảnh hay Video
-                            const textContent = resultDiv.innerText.toUpperCase();
-                            const isVideo = textContent.includes('VIDEO') || textContent.includes('.MP4') || textContent.includes('.MOV');
-
-                            if (isVideo) {
-                                // Nếu là Video: Gán link vào thẻ <video>
-                                html5Video.src = directLink;
-                                html5Video.style.display = 'block';
-                            } else {
-                                // Nếu là Ảnh: Gán link vào thẻ <img>
-                                html5Image.src = directLink;
-                                html5Image.style.display = 'block';
-                            }
-
-                            // Hiển thị container và ẩn thông báo
-                            mediaContainer.style.display = 'flex';
-                            loadingText.style.display = 'none';
-                            
+                            // Dùng /preview để Google Drive tự động render Ảnh hoặc Video an toàn nhất
+                            displayFrame.src = `https://drive.google.com/file/d/${realDriveId}/preview`;
+                            displayFrame.style.display = "block";
+                            statusViewer.style.display = "none"; // Ẩn thông báo khi load xong
                             observer.disconnect(); 
                         } else {
-                            loadingText.innerHTML = "⚠️ Không thể hiển thị: File không có ID Drive hợp lệ.";
+                            statusViewer.innerHTML = "⚠️ Lỗi: Không thể trích xuất ID Google Drive hợp lệ.";
                             observer.disconnect();
                         }
                     }
                 } else if (resultDiv.classList.contains('error')) {
-                    loadingText.innerHTML = "❌ Lỗi: Không tìm thấy dữ liệu file này.";
+                    statusViewer.innerHTML = "❌ Lỗi: Không tìm thấy file này trên hệ thống.";
                     observer.disconnect();
                 }
             });
 
+            // Quan sát sự thay đổi trong thẻ ẩn
             observer.observe(resultDiv, { attributes: true, childList: true, subtree: true });
         });
     </script>
-
 </body>
 </html>
