@@ -1,16 +1,17 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbz1VSNxtdcDVs4ocUBQlzgBKiVrB-WmplJqNiCH3bFS3IGj-w0bx11muCImJr9a0WJMLg/exec";
 const $ = id => document.getElementById(id);
 
-// --- HÀM XỬ LÝ GIAO DIỆN & GỌI API CHUNG ---
-async function callAPI(payload, loadingMsg, isFormData = false) {
+// --- HÀM GỌI API CHUNG ---
+async function callAPI(payload, loadingMsg) {
     ['bUp', 'bChk', 'bGet'].forEach(id => $(id).disabled = true);
     $('load').textContent = loadingMsg; $('load').style.display = 'block'; $('res').style.display = 'none';
 
     try {
-        let options = { method: "POST", body: payload };
-        if (!isFormData) options.headers = { "Content-Type": "text/plain;charset=utf-8" };
-        
-        let req = await fetch(API_URL, options);
+        let req = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" }, // Chuẩn JSON text để né lỗi bảo mật Google
+            body: payload
+        });
         let res = await req.json();
         
         if (res.status !== "success") throw new Error(res.message);
@@ -26,22 +27,35 @@ async function callAPI(payload, loadingMsg, isFormData = false) {
     }
 }
 
-// 1. LỆNH UPLOAD
-async function uploadFile() {
+// 1. LỆNH UPLOAD (Base64)
+function uploadFile() {
     let file = $('fIn').files[0];
     if (!file) return alert("Vui lòng chọn file!");
     if (file.size > 50 * 1024 * 1024) return alert("❌ File vượt quá 50MB!");
 
-    let fd = new FormData();
-    fd.append("action", "upload");
-    fd.append("file", file);
+    let reader = new FileReader();
+    
+    // Tạm khóa nút khi đang đọc file
+    ['bUp', 'bChk', 'bGet'].forEach(id => $(id).disabled = true);
+    $('load').textContent = "⏳ Đang chuẩn bị file bản gốc (giữ nguyên 100% chất lượng)...";
+    $('load').style.display = 'block'; $('res').style.display = 'none';
 
-    let res = await callAPI(fd, "⏳ Đang tải lên bản nhị phân gốc...", true);
-    if (res) $('res').innerHTML = `
-        <strong>✅ Tải lên thành công!</strong><br>
-        - Loại: ${res.category} | ID: <b>${res.fileName}</b><br>
-        - Link: <a href="${res.fileUrl}" target="_blank">Xem ngay</a>
-    `;
+    reader.onload = async function () {
+        let payload = JSON.stringify({
+            action: "upload",
+            filename: file.name,
+            mimeType: file.type,
+            fileData: reader.result
+        });
+
+        let res = await callAPI(payload, "⏳ Đang đẩy file lên Google Drive...");
+        if (res) $('res').innerHTML = `
+            <strong>✅ Tải lên thành công!</strong><br>
+            - Loại: ${res.category} | ID: <b>${res.fileName}</b><br>
+            - Link: <a href="${res.fileUrl}" target="_blank">Xem ngay</a>
+        `;
+    };
+    reader.readAsDataURL(file);
 }
 
 // 2. LỆNH CHECK
