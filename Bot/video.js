@@ -3,12 +3,10 @@ const $ = id => document.getElementById(id);
 
 $('bUp').addEventListener('click', async function() {
     let file = $('fIn').files[0];
-    
     if (!file) return alert("Vui lòng chọn file!");
     
-    // BỘ LỌC GIỚI HẠN 100MB
     if (file.size > 100 * 1024 * 1024) {
-        return alert("❌ Kích thước file vượt quá dung lượng cho phép. Tối đa 100MB/file!");
+        return alert("❌ Kích thước file vượt quá 100MB!");
     }
     
     $('bUp').disabled = true;
@@ -27,7 +25,9 @@ $('bUp').addEventListener('click', async function() {
             body: JSON.stringify({
                 action: "initUpload",
                 filename: file.name,
-                mimeType: file.type
+                mimeType: file.type,
+                // Lấy chính xác địa chỉ web của bạn (Github Pages) để xin quyền Google
+                origin: window.location.origin 
             })
         });
         
@@ -47,36 +47,43 @@ $('bUp').addEventListener('click', async function() {
             if (e.lengthComputable) {
                 let percent = Math.round((e.loaded / e.total) * 100);
                 $('progressBar').style.width = percent + '%';
-                
                 let loadedMB = (e.loaded / (1024 * 1024)).toFixed(1);
                 let totalMB = (e.total / (1024 * 1024)).toFixed(1);
                 $('progressText').textContent = `${percent}% (${loadedMB} MB / ${totalMB} MB)`;
             }
         };
         
+        // Bắt lỗi triệt để trong quá trình nhận kết quả
         xhr.onload = function() {
             $('bUp').disabled = false;
             $('progressContainer').style.display = 'none';
             
-            if (xhr.status === 200 || xhr.status === 201) {
-                let response = JSON.parse(xhr.responseText);
-                let fileId = response.id;
-                
-                let finalUrl = type === "IMAGE" 
-                    ? `https://drive.google.com/uc?export=view&id=${fileId}` 
-                    : `https://drive.google.com/file/d/${fileId}/view`;
+            try {
+                if (xhr.status === 200 || xhr.status === 201 || xhr.status === 308) {
+                    let response = JSON.parse(xhr.responseText);
+                    if (!response.id) throw new Error("Google không trả về ID file.");
+                    
+                    let fileId = response.id;
+                    let finalUrl = type === "IMAGE" 
+                        ? `https://drive.google.com/uc?export=view&id=${fileId}` 
+                        : `https://drive.google.com/file/d/${fileId}/view`;
 
-                $('res').className = "ok";
-                $('res').innerHTML = `
-                    <strong>✅ Thành công! URL gốc của file:</strong>
-                    <div class="url-box">${finalUrl}</div>
-                    <div style="margin-top:12px; text-align:center;">
-                        <a href="${finalUrl}" target="_blank" style="color:#166534; font-weight:bold; text-decoration:none;">👉 Bấm vào đây để xem trực tiếp</a>
-                    </div>
-                `;
+                    $('res').className = "ok";
+                    $('res').innerHTML = `
+                        <strong>✅ Thành công! URL gốc của file:</strong>
+                        <div class="url-box">${finalUrl}</div>
+                        <div style="margin-top:12px; text-align:center;">
+                            <a href="${finalUrl}" target="_blank" style="color:#166534; font-weight:bold; text-decoration:none;">👉 Bấm vào đây để xem trực tiếp</a>
+                        </div>
+                    `;
+                    $('res').style.display = 'block';
+                } else {
+                    throw new Error("Lỗi đẩy file: " + xhr.statusText);
+                }
+            } catch (parseError) {
+                $('res').className = "err";
+                $('res').innerHTML = `<strong>❌ File đã lưu nhưng web bị lỗi đọc ID:</strong> ${parseError.message}`;
                 $('res').style.display = 'block';
-            } else {
-                throw new Error("Lỗi khi đẩy file vào Drive: " + xhr.responseText);
             }
         };
         
