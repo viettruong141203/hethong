@@ -3,119 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trình Xem Cinematic</title>
+    <title>Upload File Hạng Nặng</title>
     <style>
-        /* Nền tối phong cách rạp phim */
-        body {
-            margin: 0; padding: 0; 
-            background-color: #050505; color: #fff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 100vh; overflow: hidden;
-        }
-
-        /* 🔒 Vùng ẩn cho upload.js (Không được xóa) */
-        #hidden-zone { display: none !important; }
-
-        /* Tiêu đề tùy chỉnh phía trên video */
-        .top-bar {
-            position: absolute; top: 0; left: 0; right: 0;
-            padding: 20px; display: flex; justify-content: space-between;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
-            z-index: 10; font-weight: 500;
-        }
+        :root{--p:#4f46e5;--bg:#f8fafc;--txt:#1e293b;--bd:#cbd5e1}
+        body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--txt);margin:0;padding:20px;display:flex;justify-content:center;align-items:center;min-height:100vh}
+        .box{background:#fff;padding:30px;border-radius:12px;box-shadow:0 10px 25px -5px rgba(0,0,0,0.1);width:100%;max-width:450px}
+        h2{text-align:center;color:var(--p);margin-top:0}
+        label{display:block;font-weight:600;margin-bottom:8px;font-size:14px}
+        input{width:100%;padding:10px;border:1px solid var(--bd);border-radius:6px;box-sizing:border-box;margin-bottom:15px}
+        button{width:100%;padding:12px;color:#fff;background:var(--p);border:none;border-radius:6px;font-weight:600;cursor:pointer}
+        button:disabled{background:#94a3b8;cursor:wait}
+        #load{text-align:center;color:var(--p);font-weight:500;display:none;margin-top:15px}
+        #res{margin-top:15px;padding:15px;border-radius:6px;display:none;font-size:14px;word-break:break-all}
+        #res.ok{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
+        #res.err{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+        .url-box {background: #fff; padding: 10px; border: 1px solid #bbf7d0; border-radius: 4px; margin-top: 10px; user-select: all; cursor: text;}
         
-        .file-title { font-size: 18px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-
-        /* Khung chiếu bóng */
-        .cinema-screen {
-            width: 100%; max-width: 1000px; height: 60vh; min-height: 400px;
-            background: #000; border-radius: 12px; overflow: hidden;
-            box-shadow: 0 0 50px rgba(255,255,255,0.05);
-            display: none; position: relative;
-        }
-
-        iframe { width: 100%; height: 100%; border: none; }
-
-        /* Trạng thái Loading */
-        #status-msg {
-            font-size: 16px; color: #888;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+        /* CSS Cho thanh tiến trình (Progress Bar) */
+        #progressContainer { display: none; margin-top: 15px; }
+        .progress-track { background: #e2e8f0; border-radius: 6px; overflow: hidden; height: 22px; width: 100%; }
+        #progressBar { background: var(--s, #10b981); width: 0%; height: 100%; transition: width 0.2s ease; }
+        #progressText { text-align: center; font-size: 13px; margin-top: 6px; font-weight: bold; color: var(--txt); }
     </style>
 </head>
 <body>
 
-    <div class="top-bar">
-        <div class="file-title" id="displayTitle">Đang kết nối...</div>
+<div class="box">
+    <h2>Lưu File Siêu Tốc & Lấy URL</h2>
+    
+    <label>Chọn File (Hỗ trợ file lớn > 300MB):</label>
+    <input type="file" id="fIn" accept="image/*,video/*">
+    <button id="bUp">🚀 Tải Lên Drive</button>
+    
+    <div id="load">⏳ Đang khởi tạo kết nối bảo mật...</div>
+    
+    <!-- Thanh tiến trình -->
+    <div id="progressContainer">
+        <div class="progress-track">
+            <div id="progressBar"></div>
+        </div>
+        <div id="progressText">0% (0.0 MB / 0.0 MB)</div>
     </div>
 
-    <div id="status-msg">Đang đồng bộ dữ liệu với Google Drive...</div>
+    <div id="res"></div>
+</div>
 
-    <div class="cinema-screen" id="cinemaScreen">
-        <iframe id="mediaFrame" allow="autoplay; fullscreen"></iframe>
-    </div>
+<script src="Bot/video.js"></script>
 
-    <!-- VÙNG ẨN: Ép chạy upload.js ngầm -->
-    <div id="hidden-zone">
-        <input type="text" id="searchId">
-        <input type="file" id="fileInput">
-        <button id="uploadBtn"></button><button id="fetchBtn"></button><button id="checkBtn"></button>
-        <div id="loadingText"></div><div id="result"></div>
-    </div>
-
-    <script src="https://viettruong141203.github.io/hethong/Bot/upload.js"></script>
-
-    <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const fileId = urlParams.get('id');
-            const statusMsg = document.getElementById('status-msg');
-
-            if (!fileId) {
-                statusMsg.innerHTML = '⚠️ URL thiếu ID. Vui lòng thêm ?id=...';
-                return;
-            }
-
-            // Gọi hệ thống của bạn
-            document.getElementById('searchId').value = fileId;
-            if (typeof checkDataById === 'function') checkDataById();
-
-            const resultDiv = document.getElementById('result');
-            const observer = new MutationObserver(() => {
-                if (resultDiv.classList.contains('success')) {
-                    observer.disconnect();
-                    
-                    // Lấy link Drive
-                    const linkTag = resultDiv.querySelector('a');
-                    let realDriveId = null;
-                    if (linkTag && linkTag.href) {
-                        let match = linkTag.href.match(/\/(?:d|id=)\/([a-zA-Z0-9_-]+)/);
-                        if (match) realDriveId = match[1];
-                    }
-
-                    if (realDriveId) {
-                        // Hiển thị iframe
-                        document.getElementById('mediaFrame').src = `https://drive.google.com/file/d/${realDriveId}/preview`;
-                        document.getElementById('cinemaScreen').style.display = 'block';
-                        statusMsg.style.display = 'none';
-                        
-                        // Cập nhật tiêu đề ảo (lấy từ dữ liệu trả về)
-                        let rawText = resultDiv.innerText;
-                        let nameMatch = rawText.match(/Tên file:\s*(.*)/i);
-                        if (nameMatch) document.getElementById('displayTitle').innerText = nameMatch[1];
-                        else document.getElementById('displayTitle').innerText = "Trình phát Media";
-                    } else {
-                        statusMsg.innerHTML = '⚠️ Lỗi: Link lưu trong hệ thống không phải ID Drive.';
-                    }
-                } else if (resultDiv.classList.contains('error')) {
-                    observer.disconnect();
-                    statusMsg.innerHTML = '❌ Dữ liệu không tồn tại.';
-                }
-            });
-            observer.observe(resultDiv, { attributes: true, childList: true, subtree: true });
-        });
-    </script>
 </body>
 </html>
