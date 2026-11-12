@@ -1,7 +1,7 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbz1VSNxtdcDVs4ocUBQlzgBKiVrB-WmplJqNiCH3bFS3IGj-w0bx11muCImJr9a0WJMLg/exec";
 const $ = id => document.getElementById(id);
 
-// --- HÀM GỌI API CHUNG ---
+// --- HÀM GỌI API CHUNG BẢO MẬT & CHỐNG LỖI ---
 async function callAPI(payload, loadingMsg) {
     ['bUp', 'bChk', 'bGet'].forEach(id => $(id).disabled = true);
     $('load').textContent = loadingMsg; $('load').style.display = 'block'; $('res').style.display = 'none';
@@ -9,7 +9,7 @@ async function callAPI(payload, loadingMsg) {
     try {
         let req = await fetch(API_URL, {
             method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" }, // Chuẩn JSON text để né lỗi bảo mật Google
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: payload
         });
         let res = await req.json();
@@ -19,7 +19,7 @@ async function callAPI(payload, loadingMsg) {
         return res;
     } catch (err) {
         $('res').className = "err";
-        $('res').innerHTML = `<strong>❌ Lỗi:</strong> ${err.message || "Mất kết nối mạng."}`;
+        $('res').innerHTML = `<strong>❌ Lỗi:</strong> ${err.message || "Kết nối bị gián đoạn."}`;
         return null;
     } finally {
         ['bUp', 'bChk', 'bGet'].forEach(id => $(id).disabled = false);
@@ -27,17 +27,15 @@ async function callAPI(payload, loadingMsg) {
     }
 }
 
-// 1. LỆNH UPLOAD (Base64)
+// 1. LỆNH UPLOAD (Đọc Base64)
 function uploadFile() {
     let file = $('fIn').files[0];
     if (!file) return alert("Vui lòng chọn file!");
     if (file.size > 50 * 1024 * 1024) return alert("❌ File vượt quá 50MB!");
 
     let reader = new FileReader();
-    
-    // Tạm khóa nút khi đang đọc file
     ['bUp', 'bChk', 'bGet'].forEach(id => $(id).disabled = true);
-    $('load').textContent = "⏳ Đang chuẩn bị file bản gốc (giữ nguyên 100% chất lượng)...";
+    $('load').textContent = "⏳ Đang mã hóa file chuẩn bị tải lên...";
     $('load').style.display = 'block'; $('res').style.display = 'none';
 
     reader.onload = async function () {
@@ -77,7 +75,6 @@ async function getAll() {
     if (!res) return;
 
     let html = `<strong>✅ Đồng bộ thành công!</strong><hr>`;
-    
     let buildList = (title, arr) => {
         let h = `<h4>${title} (${arr.length})</h4><ul style="padding-left:20px;margin-top:5px">`;
         if(!arr.length) return h + `<li>Trống.</li></ul>`;
