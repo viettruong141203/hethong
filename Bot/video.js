@@ -1,11 +1,16 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbx2n6BQsV1FX1MBeczJyTTC4I0cb54vMme0K8MzZN7hRnaENIP4X46pqSlugKUzc66FPg/exec"; // Cập nhật link mới nếu cần
+const API_URL = "https://script.google.com/macros/s/AKfycbx2n6BQsV1FX1MBeczJyTTC4I0cb54vMme0K8MzZN7hRnaENIP4X46pqSlugKUzc66FPg/exec";
 const $ = id => document.getElementById(id);
 
 $('bUp').addEventListener('click', async function() {
     let file = $('fIn').files[0];
+    
     if (!file) return alert("Vui lòng chọn file!");
     
-    // Đặt lại giao diện UI
+    // BỘ LỌC GIỚI HẠN 100MB
+    if (file.size > 100 * 1024 * 1024) {
+        return alert("❌ Kích thước file vượt quá dung lượng cho phép. Tối đa 100MB/file!");
+    }
+    
     $('bUp').disabled = true;
     $('res').style.display = 'none';
     $('progressContainer').style.display = 'none';
@@ -14,7 +19,6 @@ $('bUp').addEventListener('click', async function() {
     $('load').style.display = 'block';
 
     try {
-        // BƯỚC 1: XIN GIẤY PHÉP VÀ ĐƯỜNG ỐNG TRUYỀN TẢI TỪ BACKEND
         $('load').textContent = "⏳ Đang thiết lập đường ống tải file với Google...";
         
         let initRes = await fetch(API_URL, {
@@ -26,11 +30,10 @@ $('bUp').addEventListener('click', async function() {
                 mimeType: file.type
             })
         });
-        let initData = await initRes.json();
         
+        let initData = await initRes.json();
         if (initData.status !== "success") throw new Error(initData.message);
 
-        // BƯỚC 2: ĐẨY TRỰC TIẾP FILE NẶNG VÀO SERVER GOOGLE TỪ TRÌNH DUYỆT
         $('load').style.display = 'none';
         $('progressContainer').style.display = 'block';
         
@@ -40,7 +43,6 @@ $('bUp').addEventListener('click', async function() {
         let xhr = new XMLHttpRequest();
         xhr.open("PUT", uploadUrl, true);
         
-        // Theo dõi quá trình tải %
         xhr.upload.onprogress = function(e) {
             if (e.lengthComputable) {
                 let percent = Math.round((e.loaded / e.total) * 100);
@@ -52,16 +54,14 @@ $('bUp').addEventListener('click', async function() {
             }
         };
         
-        // Khi tải xong hoàn tất
         xhr.onload = function() {
             $('bUp').disabled = false;
             $('progressContainer').style.display = 'none';
             
             if (xhr.status === 200 || xhr.status === 201) {
                 let response = JSON.parse(xhr.responseText);
-                let fileId = response.id; // Lấy ID thực tế từ Drive trả về
+                let fileId = response.id;
                 
-                // Trả về định dạng Link xem trực tiếp (URL Gốc)
                 let finalUrl = type === "IMAGE" 
                     ? `https://drive.google.com/uc?export=view&id=${fileId}` 
                     : `https://drive.google.com/file/d/${fileId}/view`;
@@ -84,7 +84,6 @@ $('bUp').addEventListener('click', async function() {
             throw new Error("Mạng bị ngắt kết nối giữa chừng.");
         };
         
-        // Bắt đầu bơm file vào ống!
         xhr.send(file);
 
     } catch (err) {
