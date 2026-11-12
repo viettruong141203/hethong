@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload File Hạng Nặng</title>
+    <title>Upload File (Max 100MB)</title>
     <style>
         :root{--p:#4f46e5;--bg:#f8fafc;--txt:#1e293b;--bd:#cbd5e1}
         body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--txt);margin:0;padding:20px;display:flex;justify-content:center;align-items:center;min-height:100vh}
@@ -19,7 +19,7 @@
         #res.err{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
         .url-box {background: #fff; padding: 10px; border: 1px solid #bbf7d0; border-radius: 4px; margin-top: 10px; user-select: all; cursor: text;}
         
-        /* CSS Cho thanh tiến trình (Progress Bar) */
+        /* Progress Bar */
         #progressContainer { display: none; margin-top: 15px; }
         .progress-track { background: #e2e8f0; border-radius: 6px; overflow: hidden; height: 22px; width: 100%; }
         #progressBar { background: var(--s, #10b981); width: 0%; height: 100%; transition: width 0.2s ease; }
@@ -31,13 +31,12 @@
 <div class="box">
     <h2>Lưu File Siêu Tốc & Lấy URL</h2>
     
-    <label>Chọn File (Hỗ trợ file lớn > 300MB):</label>
+    <label>Chọn File (Tối đa 100MB):</label>
     <input type="file" id="fIn" accept="image/*,video/*">
     <button id="bUp">🚀 Tải Lên Drive</button>
     
-    <div id="load">⏳ Đang khởi tạo kết nối bảo mật...</div>
+    <div id="load">⏳ Đang khởi tạo kết nối...</div>
     
-    <!-- Thanh tiến trình -->
     <div id="progressContainer">
         <div class="progress-track">
             <div id="progressBar"></div>
@@ -48,7 +47,7 @@
     <div id="res"></div>
 </div>
 
-<script src="Bot/video.js"></script>
+<script src="upload.js"></script>
 
 </body>
 </html>
