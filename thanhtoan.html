@@ -3,44 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý Giao dịch</title>
+    <title>PaymentDeck Pro - Quản lý Giao dịch</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .modal-enter { animation: modalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .modal-enter { animation: modalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         @keyframes modalIn {
-            0% { opacity: 0; transform: scale(0.96) translateY(10px); }
+            0% { opacity: 0; transform: scale(0.95) translateY(10px); }
             100% { opacity: 1; transform: scale(1) translateY(0); }
         }
     </style>
 </head>
-<body class="text-slate-800 pb-20 selection:bg-indigo-100 selection:text-indigo-900">
+<body class="text-slate-800 pb-24 selection:bg-indigo-500 selection:text-white">
 
-    <!-- HEADER -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+    <!-- HEADER HIỆN ĐẠI -->
+    <header class="bg-white/80 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center font-black shadow-md shadow-indigo-600/30">
-                    <i class="fa-solid fa-wallet"></i>
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center font-black shadow-lg shadow-indigo-600/25 text-lg">
+                    <i class="fa-solid fa-layer-group"></i>
                 </div>
                 <div>
-                    <h1 class="text-lg sm:text-xl font-black text-slate-900 tracking-tight">PaymentDeck</h1>
-                    <p class="text-[11px] text-slate-400 font-medium">Quản lý thanh toán tự động</p>
+                    <h1 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+                        PaymentDeck
+                        <span id="total-badge" class="hidden px-2.5 py-0.5 text-[11px] font-bold bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100">0 đơn</span>
+                    </h1>
+                    <p class="text-[11px] text-slate-400 font-semibold tracking-wide">QUẢN LÝ THANH TOÁN TỰ ĐỘNG</p>
                 </div>
             </div>
             <div class="flex items-center gap-2.5">
-                <button onclick="loadData()" class="text-slate-400 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 w-10 h-10 rounded-xl transition-all flex items-center justify-center border border-slate-200" title="Làm mới dữ liệu">
+                <button onclick="loadData()" class="text-slate-400 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 w-10 h-10 rounded-xl transition-all flex items-center justify-center border border-slate-200/80 shadow-xs" title="Làm mới">
                     <i class="fa-solid fa-rotate-right text-xs" id="refresh-icon"></i>
                 </button>
-                <button onclick="openAddModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 sm:px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm shadow-md shadow-indigo-600/20 transition-all flex items-center gap-2">
+                <button onclick="openEmailModal()" class="text-slate-400 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 w-10 h-10 rounded-xl transition-all flex items-center justify-center border border-slate-200/80 shadow-xs" title="Cấu hình / Gửi Email tùy chỉnh">
+                    <i class="fa-solid fa-envelope text-xs"></i>
+                </button>
+                <button onclick="openAddModal()" class="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white px-4 sm:px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm shadow-lg shadow-indigo-600/25 transition-all flex items-center gap-2">
                     <i class="fa-solid fa-plus"></i> Tạo đơn mới
                 </button>
             </div>
@@ -48,45 +54,45 @@
     </header>
 
     <!-- MAIN DASHBOARD -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 mt-6 sm:mt-8">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 mt-6">
         
-        <!-- THỐNG KÊ TỔNG QUAN (METRICS CARDS) -->
+        <!-- THỐNG KÊ TỔNG QUAN -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div class="bg-white p-4.5 rounded-2xl border border-slate-100 shadow-xs flex items-center gap-4">
                 <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg"><i class="fa-solid fa-receipt"></i></div>
                 <div>
-                    <p class="text-[11px] font-bold text-slate-400 uppercase">Tổng số đơn</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tổng đơn</p>
                     <h3 id="stat-total" class="text-xl font-black text-slate-800">0</h3>
                 </div>
             </div>
-            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div class="bg-white p-4.5 rounded-2xl border border-slate-100 shadow-xs flex items-center gap-4">
                 <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg"><i class="fa-solid fa-circle-check"></i></div>
                 <div>
-                    <p class="text-[11px] font-bold text-slate-400 uppercase">Đã thanh toán</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Đã thanh toán</p>
                     <h3 id="stat-paid" class="text-xl font-black text-emerald-600">0</h3>
                 </div>
             </div>
-            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-4">
+            <div class="bg-white p-4.5 rounded-2xl border border-slate-100 shadow-xs flex items-center gap-4">
                 <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg"><i class="fa-solid fa-clock"></i></div>
                 <div>
-                    <p class="text-[11px] font-bold text-slate-400 uppercase">Chờ thanh toán</p>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Chờ thanh toán</p>
                     <h3 id="stat-pending" class="text-xl font-black text-amber-600">0</h3>
                 </div>
             </div>
-            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-4">
-                <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg"><i class="fa-solid fa-coins"></i></div>
+            <div class="bg-white p-4.5 rounded-2xl border border-slate-100 shadow-xs flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center text-lg"><i class="fa-solid fa-wallet"></i></div>
                 <div>
-                    <p class="text-[11px] font-bold text-slate-400 uppercase">Tổng doanh thu</p>
-                    <h3 id="stat-revenue" class="text-lg font-black text-indigo-600 truncate max-w-[140px]">0 ₫</h3>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Doanh thu</p>
+                    <h3 id="stat-revenue" class="text-base font-black text-violet-600 truncate max-w-[140px]">0 ₫</h3>
                 </div>
             </div>
         </div>
 
-        <!-- THANH TÌM KIẾM & LỌC -->
-        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs mb-6 flex flex-col sm:flex-row gap-3 justify-between items-center">
+        <!-- TÌM KIẾM & LỌC -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs mb-6 flex flex-col sm:flex-row gap-3 justify-between items-center">
             <div class="relative w-full sm:w-80">
                 <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400"><i class="fa-solid fa-search text-xs"></i></span>
-                <input type="text" id="searchInput" oninput="handleSearch()" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-xs font-medium text-slate-700 outline-none focus:border-indigo-500 focus:bg-white transition-all" placeholder="Tìm theo mã đơn hoặc nội dung...">
+                <input type="text" id="searchInput" oninput="handleSearch()" class="w-full bg-slate-50 border border-slate-200/80 rounded-xl pl-10 pr-4 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-indigo-500 focus:bg-white transition-all" placeholder="Tìm theo mã đơn hoặc nội dung...">
             </div>
             <div class="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
                 <button onclick="filterStatus('all')" id="filter-all" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white transition-all shadow-xs whitespace-nowrap">Tất cả</button>
@@ -96,108 +102,149 @@
         </div>
 
         <!-- Toast Thông báo -->
-        <div id="toast" class="fixed bottom-6 right-6 z-50 transform transition-all duration-300 translate-y-20 opacity-0 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl text-xs font-semibold flex items-center gap-2.5 border border-slate-800">
+        <div id="toast" class="fixed bottom-6 right-6 z-50 transform transition-all duration-300 translate-y-20 opacity-0 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-semibold flex items-center gap-2.5 border border-slate-800">
             <i class="fa-solid fa-circle-info text-indigo-400"></i> <span id="toast-msg">Thông báo</span>
         </div>
 
         <!-- Loading -->
         <div id="loading" class="text-center py-24">
-            <div class="inline-block relative w-10 h-10 mb-3">
+            <div class="inline-block relative w-12 h-12 mb-3">
                 <div class="absolute inset-0 border-3 border-indigo-100 rounded-full"></div>
                 <div class="absolute inset-0 border-3 border-indigo-600 rounded-full border-t-transparent animate-spin"></div>
             </div>
-            <p class="text-slate-400 text-xs font-medium animate-pulse">Đang đồng bộ dữ liệu...</p>
+            <p class="text-slate-400 text-xs font-semibold animate-pulse">Đang tải dữ liệu hệ thống...</p>
         </div>
 
         <!-- Lỗi -->
-        <div id="error-box" class="hidden bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl mb-6 text-xs font-medium flex items-center gap-2">
+        <div id="error-box" class="hidden bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-2xl mb-6 text-xs font-semibold flex items-center gap-2">
             <i class="fa-solid fa-triangle-exclamation"></i>
             <span id="error-message"></span>
         </div>
 
-        <!-- GRID DECK -->
-        <div id="deck-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+        <!-- GIAO DIỆN THẺ DECK KIỂU MỚI (MODERN CARDS) -->
+        <div id="deck-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
 
         <!-- Trạng thái Trống -->
-        <div id="empty-state" class="hidden text-center py-24 bg-white rounded-2xl border border-dashed border-slate-200">
+        <div id="empty-state" class="hidden text-center py-24 bg-white rounded-3xl border border-dashed border-slate-200">
             <div class="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-3">
                 <i class="fa-solid fa-box-open text-2xl"></i>
             </div>
             <h3 class="text-sm font-bold text-slate-600">Không tìm thấy đơn hàng nào</h3>
-            <p class="text-slate-400 text-xs mt-0.5">Thử thay đổi từ khóa tìm kiếm hoặc tạo đơn mới.</p>
+            <p class="text-slate-400 text-xs mt-0.5">Thử thay đổi từ khóa hoặc tạo đơn mới.</p>
         </div>
     </main>
 
-    <!-- MODAL XEM CHI TIẾT -->
-    <div id="detail-modal" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl modal-enter border border-slate-100 relative">
-            <div class="flex justify-between items-center mb-4 pb-2.5 border-b border-slate-100">
-                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-                    <i class="fa-solid fa-circle-info text-indigo-600"></i> Chi tiết đơn hàng
+    <!-- MODAL XEM CHI TIẾT ĐƠN HÀNG -->
+    <div id="detail-modal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl modal-enter border border-slate-100 relative">
+            <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-100">
+                <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs"><i class="fa-solid fa-receipt"></i></div>
+                    Chi tiết giao dịch
                 </h3>
-                <button onclick="closeModal('detail-modal')" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-xs">
+                <button onclick="closeModal('detail-modal')" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-xs transition-colors">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
             
-            <div class="space-y-3 text-xs">
+            <div class="space-y-3.5 text-xs">
                 <div class="flex justify-between py-1.5 border-b border-slate-50">
-                    <span class="text-slate-400">Mã đơn:</span>
-                    <span id="detail-id" class="font-mono font-bold text-slate-700"></span>
+                    <span class="text-slate-400 font-medium">Mã đơn:</span>
+                    <span id="detail-id" class="font-mono font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded"></span>
                 </div>
                 <div class="flex justify-between py-1.5 border-b border-slate-50">
-                    <span class="text-slate-400">Số tiền:</span>
-                    <span id="detail-amount" class="font-black text-indigo-600 text-sm"></span>
+                    <span class="text-slate-400 font-medium">Số tiền:</span>
+                    <span id="detail-amount" class="font-black text-indigo-600 text-base"></span>
                 </div>
                 <div class="flex justify-between py-1.5 border-b border-slate-50">
-                    <span class="text-slate-400">Trạng thái:</span>
+                    <span class="text-slate-400 font-medium">Trạng thái:</span>
                     <span id="detail-status" class="font-bold"></span>
                 </div>
                 <div class="flex justify-between py-1.5 border-b border-slate-50">
-                    <span class="text-slate-400">Thời gian tạo:</span>
-                    <span id="detail-time" class="font-medium text-slate-600"></span>
+                    <span class="text-slate-400 font-medium">Thời gian tạo:</span>
+                    <span id="detail-time" class="font-medium text-slate-700"></span>
                 </div>
                 <div class="flex justify-between py-1.5 border-b border-slate-50">
-                    <span class="text-slate-400">Thanh toán:</span>
-                    <span id="detail-payment-time" class="font-medium text-slate-600"></span>
+                    <span class="text-slate-400 font-medium">Thanh toán:</span>
+                    <span id="detail-payment-time" class="font-medium text-slate-700"></span>
                 </div>
                 <div>
-                    <span class="block text-slate-400 mb-1">Nội dung ghi chú:</span>
-                    <div id="detail-content" class="bg-slate-50 p-2.5 rounded-lg font-mono text-[11px] text-slate-600 break-words border border-slate-100"></div>
+                    <span class="block text-slate-400 font-medium mb-1">Nội dung ghi chú:</span>
+                    <div id="detail-content" class="bg-slate-50 p-3 rounded-xl font-mono text-[11px] text-slate-600 break-words border border-slate-100"></div>
                 </div>
             </div>
 
-            <div class="mt-5 pt-3 border-t border-slate-100 flex justify-end">
-                <button onclick="closeModal('detail-modal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition-colors">Đóng</button>
+            <div class="mt-6 pt-4 border-t border-slate-100 flex justify-end">
+                <button onclick="closeModal('detail-modal')" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors">Đóng cửa sổ</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL TẠO ĐƠN -->
-    <div id="add-modal" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl modal-enter border border-slate-100">
-            <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-plus-circle text-indigo-600"></i> Tạo đơn hàng mới
-            </h3>
+    <!-- MODAL FORM TẠO ĐƠN MỚI (ĐƯỢC THIẾT KẾ LẠI CỰC KỲ ĐẸP MẮT) -->
+    <div id="add-modal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-7 shadow-2xl modal-enter border border-slate-100 relative">
+            <div class="text-center mb-6">
+                <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-xl mx-auto mb-3 shadow-inner">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <h3 class="text-lg font-black text-slate-900">Tạo đơn hàng mới</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Nhập số tiền để tạo giao dịch tự động</p>
+            </div>
+
             <form onsubmit="handleAddSubmit(event)">
-                <div class="mb-5">
-                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Số tiền (VNĐ)</label>
+                <div class="mb-6">
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Số tiền thanh toán (VNĐ)</label>
                     <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold">₫</span>
-                        <input type="number" id="add-amount" required class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2.5 text-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none font-bold text-base" placeholder="0">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 font-extrabold">₫</span>
+                        <input type="number" id="add-amount" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-3.5 text-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white outline-none font-black text-xl transition-all placeholder:text-slate-300" placeholder="50000">
                     </div>
                 </div>
-                <div class="flex justify-end gap-2">
-                    <button type="button" onclick="closeModal('add-modal')" class="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded-xl font-bold text-xs">Hủy</button>
-                    <button type="submit" id="btn-add" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-md shadow-indigo-600/20 transition-all">Tạo ngay</button>
+                <div class="flex gap-2">
+                    <button type="button" onclick="closeModal('add-modal')" class="w-1/3 py-3 text-slate-500 hover:bg-slate-100 rounded-xl font-bold text-xs transition-colors">Hủy</button>
+                    <button type="submit" id="btn-add" class="w-2/3 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition-all">Tạo & Gửi Mail</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL FORM TÙY CHỈNH / GỬI EMAIL THỦ CÔNG -->
+    <div id="email-modal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-7 shadow-2xl modal-enter border border-slate-100 relative">
+            <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-100">
+                <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-envelope-open-text text-blue-600"></i> Form Gửi Email Tùy Chỉnh
+                </h3>
+                <button onclick="closeModal('email-modal')" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-xs">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <form onsubmit="handleManualEmailSubmit(event)">
+                <div class="space-y-3.5 text-xs mb-5">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Email người nhận</label>
+                        <input type="email" id="custom-email" value="viettruong141203@gmail.com" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 font-medium text-slate-700 outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Tiêu đề email</label>
+                        <input type="text" id="custom-subject" value="Thanh toán online" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 font-medium text-slate-700 outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nội dung thông báo</label>
+                        <textarea id="custom-msg" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 font-medium text-slate-700 outline-none focus:border-blue-500 resize-none" placeholder="Nhập nội dung cần gửi..."></textarea>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" onclick="closeModal('email-modal')" class="w-1/3 py-2.5 text-slate-500 hover:bg-slate-100 rounded-xl font-bold text-xs">Đóng</button>
+                    <button type="submit" id="btn-custom-email" class="w-2/3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-md shadow-blue-600/20">Gửi Email Ngay</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- MODAL SỬA ĐƠN -->
-    <div id="edit-modal" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl modal-enter border border-slate-100">
+    <div id="edit-modal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl modal-enter border border-slate-100">
             <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <i class="fa-solid fa-pen-to-square text-blue-600"></i> Chỉnh sửa đơn hàng
             </h3>
@@ -254,7 +301,7 @@
         function showToast(message, isError = false) {
             const toast = document.getElementById('toast');
             document.getElementById('toast-msg').innerText = message;
-            toast.className = `fixed bottom-6 right-6 z-50 transform transition-all duration-300 px-4 py-2.5 rounded-xl shadow-xl text-xs font-semibold flex items-center gap-2 border ${isError ? 'bg-rose-600 border-rose-500 text-white' : 'bg-slate-900 border-slate-800 text-white'}`;
+            toast.className = `fixed bottom-6 right-6 z-50 transform transition-all duration-300 px-5 py-3 rounded-2xl shadow-xl text-xs font-semibold flex items-center gap-2.5 border ${isError ? 'bg-rose-600 border-rose-500 text-white' : 'bg-slate-900 border-slate-800 text-white'}`;
             setTimeout(() => toast.classList.remove('translate-y-20', 'opacity-0'), 10);
             setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
         }
@@ -322,6 +369,7 @@
             renderDeck();
         }
 
+        // RENDER GIAO DIỆN THẺ DECK KIỂU MỚI (HIỆN ĐẠI & SANG TRỌNG)
         function renderDeck() {
             const deck = document.getElementById('deck-container');
             deck.innerHTML = '';
@@ -345,37 +393,41 @@
                 const amount = Number(order.amount || 0).toLocaleString('vi-VN');
                 const status = order.status || 'Chờ thanh toán';
                 
-                let badgeClass = 'bg-amber-50 text-amber-600 border-amber-200';
-                let iconClass = 'fa-clock';
+                let badgeClass = 'bg-amber-50 text-amber-700 border-amber-200/80';
+                let iconClass = 'fa-clock text-amber-500';
+                let accentColor = 'from-amber-400 to-orange-400';
                 
                 if (status === 'Đã thanh toán') {
-                    badgeClass = 'bg-emerald-50 text-emerald-600 border-emerald-200';
-                    iconClass = 'fa-circle-check';
+                    badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200/80';
+                    iconClass = 'fa-circle-check text-emerald-500';
+                    accentColor = 'from-emerald-400 to-teal-400';
                 }
 
                 const card = document.createElement('div');
-                card.className = "bg-white rounded-2xl p-4 shadow-xs hover:shadow-md border border-slate-200/70 flex flex-col justify-between transition-all group";
+                card.className = "bg-white rounded-3xl p-5 shadow-xs hover:shadow-xl border border-slate-200/70 flex flex-col justify-between transition-all duration-300 relative overflow-hidden group hover:-translate-y-1";
                 card.innerHTML = `
-                    <div class="flex justify-between items-start mb-3">
-                        <span class="text-[11px] font-mono font-bold text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200/60">#${id}</span>
-                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 ${badgeClass}">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r ${accentColor}"></div>
+                    
+                    <div class="flex justify-between items-start mb-3 pt-1">
+                        <span class="text-xs font-mono font-extrabold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-xl border border-slate-200/60">#${id}</span>
+                        <span class="text-[11px] font-bold px-3 py-1 rounded-full border flex items-center gap-1.5 ${badgeClass} shadow-xs">
                             <i class="fa-solid ${iconClass}"></i> ${status}
                         </span>
                     </div>
                     
-                    <div class="mb-4">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Số tiền</span>
-                        <h2 class="text-xl font-black text-slate-900">${amount} <span class="text-xs font-semibold text-slate-400">₫</span></h2>
+                    <div class="mb-5">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Số tiền thanh toán</span>
+                        <h2 class="text-2xl font-black text-slate-900">${amount} <span class="text-sm font-bold text-slate-400">₫</span></h2>
                     </div>
 
                     <div class="grid grid-cols-3 gap-1.5 pt-3 border-t border-slate-100">
-                        <button onclick="openDetailModal('${id}')" class="py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 text-[11px] font-bold rounded-lg transition-colors border border-slate-200/60 flex items-center justify-center gap-1">
+                        <button onclick="openDetailModal('${id}')" class="py-2 bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 text-xs font-bold rounded-xl transition-all border border-slate-200/60 flex items-center justify-center gap-1.5" title="Xem chi tiết">
                             <i class="fa-regular fa-eye text-indigo-600"></i> Xem
                         </button>
-                        <button onclick="actionCheck('${id}')" id="btn-chk-${id}" class="py-1.5 bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 text-[11px] font-bold rounded-lg transition-colors border border-slate-200/60 flex items-center justify-center gap-1">
+                        <button onclick="actionCheck('${id}')" id="btn-chk-${id}" class="py-2 bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 text-xs font-bold rounded-xl transition-all border border-slate-200/60 flex items-center justify-center gap-1.5" title="Kiểm tra">
                             <i class="fa-solid fa-rotate-right"></i> Check
                         </button>
-                        <button onclick="openEditModal('${id}')" class="py-1.5 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white text-[11px] font-bold rounded-lg transition-colors flex items-center justify-center gap-1">
+                        <button onclick="openEditModal('${id}')" class="py-2 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs" title="Sửa">
                             <i class="fa-solid fa-pen text-[10px]"></i> Sửa
                         </button>
                     </div>
@@ -427,6 +479,10 @@
             document.getElementById('add-modal').classList.remove('hidden');
         }
 
+        function openEmailModal() {
+            document.getElementById('email-modal').classList.remove('hidden');
+        }
+
         function openEditModal(id) {
             const order = ordersData.find(item => item.id == id);
             if (!order) return;
@@ -442,15 +498,41 @@
             document.getElementById(modalId).classList.add('hidden');
         }
 
+        // GỬI EMAIL THỦ CÔNG TỪ FORM TÙY CHỈNH
+        function handleManualEmailSubmit(e) {
+            e.preventDefault();
+            const emailNhan = document.getElementById('custom-email').value;
+            const tieuDe = document.getElementById('custom-subject').value;
+            const msg = document.getElementById('custom-msg').value;
+
+            if (typeof receiveDataAndSend === "function") {
+                const noiDungHTML = `
+                    <div style="font-family: Arial, sans-serif; background-color: #f8fafc; padding: 20px;">
+                        <div style="max-width: 500px; margin: auto; background-color: #ffffff; padding: 25px; border-radius: 12px; border-top: 4px solid #2563eb;">
+                            <h3 style="color: #1e293b; margin-top: 0; text-align: center;">${tieuDe}</h3>
+                            <p style="color: #475569; font-size: 14px; line-height: 1.6;">${msg.replace(/\n/g, '<br>')}</p>
+                            <p style="color: #94a3b8; font-size: 12px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 15px; margin-top: 20px;">Được gửi tự động từ PAYMENT.</p>
+                        </div>
+                    </div>
+                `;
+                receiveDataAndSend(tieuDe, emailNhan, "PAYMENT", emailNhan, noiDungHTML);
+                closeModal('email-modal');
+                showToast("Đã gửi yêu cầu gửi Email thành công!");
+            } else {
+                showToast("Không tìm thấy file email.js!", true);
+            }
+        }
+
+        // TẠO ĐƠN & GỬI EMAIL TỰ ĐỘNG
         async function handleAddSubmit(e) {
             e.preventDefault();
             const amount = Number(document.getElementById('add-amount').value);
             const btn = document.getElementById('btn-add');
-            btn.innerHTML = `Đang xử lý...`; 
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...`; 
             btn.disabled = true;
 
             const res = await PaymentAPI.add(amount);
-            btn.innerHTML = `Tạo ngay`; 
+            btn.innerHTML = `Tạo & Gửi Mail`; 
             btn.disabled = false;
             
             if (res && res.success) {
