@@ -1,158 +1,75 @@
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz1VSNxtdcDVs4ocUBQlzgBKiVrB-WmplJqNiCH3bFS3IGj-w0bx11muCImJr9a0WJMLg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbz1VSNxtdcDVs4ocUBQlzgBKiVrB-WmplJqNiCH3bFS3IGj-w0bx11muCImJr9a0WJMLg/exec";
+const $ = id => document.getElementById(id);
 
-const resultDiv = document.getElementById('result');
-const loadingText = document.getElementById('loadingText');
+// --- HÀM XỬ LÝ GIAO DIỆN & GỌI API CHUNG ---
+async function callAPI(payload, loadingMsg, isFormData = false) {
+    ['bUp', 'bChk', 'bGet'].forEach(id => $(id).disabled = true);
+    $('load').textContent = loadingMsg; $('load').style.display = 'block'; $('res').style.display = 'none';
 
-function getButtons() {
-    return [document.getElementById('uploadBtn'), document.getElementById('checkBtn'), document.getElementById('fetchBtn')];
-}
-
-function setProcessingState(message) {
-    getButtons().forEach(btn => btn.disabled = true);
-    loadingText.textContent = message;
-    loadingText.style.display = 'block';
-    resultDiv.style.display = 'none';
-}
-
-function resetProcessingState() {
-    getButtons().forEach(btn => btn.disabled = false);
-    loadingText.style.display = 'none';
-    resultDiv.style.display = 'block';
-}
-
-// -----------------------------------------
-// 1. LỆNH UPLOAD (Dùng FormData truyền tải Binary Siêu Tốc)
-// -----------------------------------------
-function uploadFile() {
-    const fileInput = document.getElementById('fileInput');
-
-    if (!fileInput.files.length) {
-        alert("Vui lòng chọn file trước khi tải lên!");
-        return;
+    try {
+        let options = { method: "POST", body: payload };
+        if (!isFormData) options.headers = { "Content-Type": "text/plain;charset=utf-8" };
+        
+        let req = await fetch(API_URL, options);
+        let res = await req.json();
+        
+        if (res.status !== "success") throw new Error(res.message);
+        $('res').className = "ok";
+        return res;
+    } catch (err) {
+        $('res').className = "err";
+        $('res').innerHTML = `<strong>❌ Lỗi:</strong> ${err.message || "Mất kết nối mạng."}`;
+        return null;
+    } finally {
+        ['bUp', 'bChk', 'bGet'].forEach(id => $(id).disabled = false);
+        $('load').style.display = 'none'; $('res').style.display = 'block';
     }
-
-    const file = fileInput.files[0];
-    if (file.size > 50 * 1024 * 1024) {
-        alert("❌ File quá lớn. Vui lòng chọn file dưới 50MB.");
-        return;
-    }
-
-    setProcessingState("⏳ Đang truyền tải file gốc lên Drive (Chế độ nhị phân tốc độ cao)...");
-
-    const formData = new FormData();
-    formData.append("action", "upload");
-    formData.append("file", file); // Đính kèm file gốc 100%
-
-    fetch(WEB_APP_URL, { 
-        method: "POST", 
-        body: formData 
-    })
-    .then(res => res.json())
-    .then(data => {
-        resetProcessingState();
-        if (data.status === "success") {
-            resultDiv.className = "success";
-            resultDiv.innerHTML = `
-                <strong>✅ Tải bản gốc thành công!</strong><br>
-                - <strong>Loại:</strong> ${data.category}<br>
-                - <strong>ID (Tên file):</strong> ${data.fileName}<br>
-                - <strong>Thời gian:</strong> ${data.time}<br>
-                - <strong>Link:</strong> <a href="${data.fileUrl}" target="_blank">Mở File</a>
-            `;
-        } else {
-            resultDiv.className = "error";
-            resultDiv.innerHTML = `<strong>❌ Lỗi Server:</strong> ${data.message}`;
-        }
-    })
-    .catch(error => {
-        resetProcessingState();
-        resultDiv.className = "error";
-        resultDiv.innerHTML = `<strong>❌ Lỗi kết nối mạng.</strong> File quá nặng hoặc rớt mạng.`;
-    });
 }
 
-// -----------------------------------------
-// 2. LỆNH CHECK (Gửi chuẩn JSON text/plain)
-// -----------------------------------------
-function checkDataById() {
-    const searchId = document.getElementById('searchId').value.trim();
-    if (!searchId) { alert("Vui lòng nhập ID cần kiểm tra!"); return; }
+// 1. LỆNH UPLOAD
+async function uploadFile() {
+    let file = $('fIn').files[0];
+    if (!file) return alert("Vui lòng chọn file!");
+    if (file.size > 50 * 1024 * 1024) return alert("❌ File vượt quá 50MB!");
 
-    const payload = { action: "check", sheet: "", id: searchId };
-    setProcessingState("⏳ Đang tìm kiếm ID trên hệ thống...");
+    let fd = new FormData();
+    fd.append("action", "upload");
+    fd.append("file", file);
 
-    fetch(WEB_APP_URL, { 
-        method: "POST", 
-        headers: { "Content-Type": "text/plain;charset=utf-8" }, // Ép kiểu để tránh lỗi CORS của Google
-        body: JSON.stringify(payload) 
-    })
-    .then(res => res.json())
-    .then(data => {
-        resetProcessingState();
-        if (data.status === "success") {
-            resultDiv.className = "success";
-            resultDiv.innerHTML = `
-                <strong>✅ Đã tìm thấy File!</strong><br>
-                - Loại: ${data.data.category}<br>
-                - ID: ${data.data.id}<br>
-                - Tên file: ${data.data.fileName}<br>
-                - Thời gian: ${data.data.time}<br>
-                - Link: <a href="${data.data.url}" target="_blank">Xem File</a>
-            `;
-        } else {
-            resultDiv.className = "error";
-            resultDiv.innerHTML = `<strong>❌ Không tìm thấy:</strong> ${data.message}`;
-        }
-    })
-    .catch(error => {
-        resetProcessingState();
-        resultDiv.className = "error";
-        resultDiv.innerHTML = `<strong>❌ Lỗi kết nối mạng.</strong>`;
-    });
+    let res = await callAPI(fd, "⏳ Đang tải lên bản nhị phân gốc...", true);
+    if (res) $('res').innerHTML = `
+        <strong>✅ Tải lên thành công!</strong><br>
+        - Loại: ${res.category} | ID: <b>${res.fileName}</b><br>
+        - Link: <a href="${res.fileUrl}" target="_blank">Xem ngay</a>
+    `;
 }
 
-// -----------------------------------------
-// 3. LỆNH GET (Gửi chuẩn JSON text/plain)
-// -----------------------------------------
-function fetchAllData() {
-    const payload = { action: "get", sheet: "" };
-    setProcessingState("⏳ Đang lấy toàn bộ dữ liệu từ Google Sheet...");
+// 2. LỆNH CHECK
+async function checkFile() {
+    let id = $('sId').value.trim();
+    if (!id) return alert("Vui lòng nhập ID!");
 
-    fetch(WEB_APP_URL, { 
-        method: "POST", 
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload) 
-    })
-    .then(res => res.json())
-    .then(data => {
-        resetProcessingState();
-        if (data.status === "success") {
-            resultDiv.className = "success";
-            let html = `<strong>✅ Cập nhật dữ liệu thành công!</strong><hr>`;
-            
-            html += `<h4>🖼️ Dữ liệu IMAGE (${data.data.images.length} file)</h4><ul>`;
-            if(data.data.images.length === 0) html += `<li>Chưa có dữ liệu.</li>`;
-            data.data.images.forEach(img => {
-                html += `<li>[${img.time}] <strong>${img.id}</strong> - <a href="${img.url}" target="_blank">Mở Link</a></li>`;
-            });
-            html += `</ul>`;
+    let res = await callAPI(JSON.stringify({ action: "check", id: id }), "⏳ Đang tìm kiếm ID...");
+    if (res) $('res').innerHTML = `
+        <strong>✅ Tìm thấy File!</strong><br>
+        - Thuộc Sheet: ${res.data.category} | Thời gian: ${res.data.time}<br>
+        - Link: <a href="${res.data.url}" target="_blank">Mở File (${res.data.fileName})</a>
+    `;
+}
 
-            html += `<h4>🎥 Dữ liệu VIDEO (${data.data.videos.length} file)</h4><ul>`;
-            if(data.data.videos.length === 0) html += `<li>Chưa có dữ liệu.</li>`;
-            data.data.videos.forEach(vid => {
-                html += `<li>[${vid.time}] <strong>${vid.id}</strong> - <a href="${vid.url}" target="_blank">Mở Link</a></li>`;
-            });
-            html += `</ul>`;
+// 3. LỆNH GET
+async function getAll() {
+    let res = await callAPI(JSON.stringify({ action: "get" }), "⏳ Đang đồng bộ dữ liệu...");
+    if (!res) return;
 
-            resultDiv.innerHTML = html;
-        } else {
-            resultDiv.className = "error";
-            resultDiv.innerHTML = `<strong>❌ Lỗi Server:</strong> ${data.message}`;
-        }
-    })
-    .catch(error => {
-        resetProcessingState();
-        resultDiv.className = "error";
-        resultDiv.innerHTML = `<strong>❌ Lỗi kết nối mạng.</strong>`;
-    });
+    let html = `<strong>✅ Đồng bộ thành công!</strong><hr>`;
+    
+    let buildList = (title, arr) => {
+        let h = `<h4>${title} (${arr.length})</h4><ul style="padding-left:20px;margin-top:5px">`;
+        if(!arr.length) return h + `<li>Trống.</li></ul>`;
+        arr.forEach(i => h += `<li>[${i.time}] <b>${i.id}</b> - <a href="${i.url}" target="_blank">Xem</a></li>`);
+        return h + `</ul>`;
+    };
+
+    $('res').innerHTML = html + buildList("🖼️ IMAGE", res.data.images) + buildList("🎥 VIDEO", res.data.videos);
 }
