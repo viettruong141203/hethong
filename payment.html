@@ -27,7 +27,19 @@
       --item-bg: rgba(0, 0, 0, 0.4);
     }
     
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    /* CHẶN ĐÈ, CHẶN BÔI ĐEN, CHẶN ZOOM */
+    * { 
+      box-sizing: border-box; 
+      -webkit-tap-highlight-color: transparent; 
+      user-select: none; /* Chặn bôi đen */
+      -webkit-user-select: none;
+      -webkit-touch-callout: none; /* Chặn pop-up khi nhấn giữ trên mobile */
+    }
+    
+    img {
+      -webkit-user-drag: none; /* Chặn kéo ảnh */
+      pointer-events: none; /* Chặn click đè vào ảnh */
+    }
     
     html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; overscroll-behavior: none; }
     body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-dark); display: flex; justify-content: center; align-items: center; color: var(--text-main); position: relative; }
@@ -40,12 +52,12 @@
     
     @keyframes floatOrb { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(40px, 60px) scale(1.2); } }
 
-    .app-container { width: 100%; max-width: 400px; height: 100%; max-height: 100dvh; display: flex; flex-direction: column; position: relative; z-index: 1; overflow-y: auto; overflow-x: hidden; }
+    .app-container { width: 100%; max-width: 400px; height: 100%; max-height: 100dvh; display: flex; flex-direction: column; position: relative; z-index: 1; overflow-y: auto; overflow-x: hidden; touch-action: pan-y; }
     .screen { display: none; flex-direction: column; flex-grow: 1; padding: clamp(12px, 3vh, 24px); justify-content: center; animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
     .screen.active { display: flex; }
     @keyframes slideUpFade { 0% { opacity: 0; transform: translateY(30px) scale(0.97); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
     
-    .card { background: var(--card-glass); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border-radius: 28px; padding: clamp(16px, 3.5vh, 20px); box-shadow: 0 24px 40px -10px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15); border: 1px solid var(--card-border); display: flex; flex-direction: column; gap: clamp(8px, 1.5vh, 12px); }
+    .card { background: var(--card-glass); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border-radius: 28px; padding: clamp(16px, 3.5vh, 20px); box-shadow: 0 24px 40px -10px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15); border: 1px solid var(--card-border); display: flex; flex-direction: column; gap: clamp(8px, 1.5vh, 12px); pointer-events: auto; }
     
     .bank-logo-container {
       display: flex; justify-content: center; align-items: center; margin-bottom: 8px; margin-top: -5px;
@@ -56,30 +68,31 @@
       filter: drop-shadow(0 0 12px rgba(0, 229, 255, 0.4));
     }
 
-    .qr-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 2px; position: relative; }
-    .qr-wrapper { position: relative; background: #fff; padding: 10px; border-radius: 20px; border: 2px solid var(--primary); box-shadow: 0 0 20px rgba(0, 229, 255, 0.3); margin-bottom: 12px; overflow: hidden; }
-    .ai-scanner { position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, transparent, var(--primary), transparent); box-shadow: 0 0 15px var(--primary), 0 0 30px var(--primary); animation: scanAI 2s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate; z-index: 2; }
+    .qr-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 2px; position: relative; pointer-events: auto; }
+    .qr-wrapper { position: relative; background: #fff; padding: 10px; border-radius: 20px; border: 2px solid var(--primary); box-shadow: 0 0 20px rgba(0, 229, 255, 0.3); margin-bottom: 12px; overflow: hidden; pointer-events: auto; }
+    .ai-scanner { position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, transparent, var(--primary), transparent); box-shadow: 0 0 15px var(--primary), 0 0 30px var(--primary); animation: scanAI 2s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate; z-index: 2; pointer-events: none; }
     @keyframes scanAI { 0% { top: 0%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
-    .qr-wrapper img { width: auto; height: clamp(140px, 24vh, 190px); aspect-ratio: 1/1; border-radius: 12px; display: block; position: relative; z-index: 1; }
+    .qr-wrapper img { width: auto; height: clamp(140px, 24vh, 190px); aspect-ratio: 1/1; border-radius: 12px; display: block; position: relative; z-index: 1; pointer-events: auto; }
     
-    .btn-save-qr { background: linear-gradient(135deg, var(--primary), #0088FF); color: #000; border: none; border-radius: 24px; padding: 8px 20px; font-size: 13px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 0 15px var(--primary-glow); }
+    .btn-save-qr { background: linear-gradient(135deg, var(--primary), #0088FF); color: #000; border: none; border-radius: 24px; padding: 8px 20px; font-size: 13px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 0 15px var(--primary-glow); pointer-events: auto; }
     .btn-save-qr:active { transform: scale(0.94); box-shadow: 0 0 5px var(--primary-glow); }
+    .btn-save-qr:disabled { filter: grayscale(1); opacity: 0.5; pointer-events: none; }
     .btn-save-qr svg { width: 14px; height: 14px; }
 
-    .info-list { display: flex; flex-direction: column; gap: 8px; }
+    .info-list { display: flex; flex-direction: column; gap: 8px; pointer-events: auto; }
     .copy-item { display: flex; justify-content: space-between; align-items: center; padding: clamp(8px, 1.5vh, 12px) 14px; background: var(--item-bg); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; transition: all 0.2s; }
     .copy-item:active { transform: scale(0.98); background: rgba(255,255,255,0.05); border-color: var(--primary-glow); }
-    .copy-info { display: flex; flex-direction: column; overflow: hidden; padding-right: 10px; width: 100%; }
+    .copy-info { display: flex; flex-direction: column; overflow: hidden; padding-right: 10px; width: 100%; pointer-events: none; }
     
     .copy-lbl { font-size: 11.5px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.3px; margin-bottom: 3px; }
     .copy-val { font-size: 14px; font-weight: 800; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .copy-val.highlight { color: var(--primary); font-size: 16px; text-shadow: 0 0 8px var(--primary-glow); }
     
-    .btn-copy-icon { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--primary); border-radius: 10px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+    .btn-copy-icon { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--primary); border-radius: 10px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; pointer-events: auto; cursor: pointer; }
     .btn-copy-icon:active { background: var(--primary); color: #000; transform: scale(0.85); box-shadow: 0 0 10px var(--primary); }
-    .btn-copy-icon svg { width: 15px; height: 15px; }
+    .btn-copy-icon svg { width: 15px; height: 15px; pointer-events: none; }
 
-    .note-box { background: rgba(0, 229, 255, 0.05); border: 1px dashed rgba(0, 229, 255, 0.3); border-radius: 16px; padding: 12px 14px; margin-top: 4px; }
+    .note-box { background: rgba(0, 229, 255, 0.05); border: 1px dashed rgba(0, 229, 255, 0.3); border-radius: 16px; padding: 12px 14px; margin-top: 4px; pointer-events: none; }
     .note-list { list-style: none; padding: 0; margin: 0; font-size: 11px; color: var(--text-muted); line-height: 1.5; font-weight: 500;}
     .note-list li { margin-bottom: 4px; display: flex; gap: 6px; align-items: flex-start;}
     .note-list li:last-child { margin-bottom: 0; }
@@ -100,7 +113,7 @@
     .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(30px); background: var(--primary); color: #000; padding: 12px 24px; border-radius: 30px; font-size: 13px; font-weight: 800; opacity: 0; visibility: hidden; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 100; box-shadow: 0 0 20px var(--primary-glow); }
     .toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
 
-    .loader-card { background: var(--card-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 30px; padding: 40px 30px; width: 100%; max-width: 320px; box-shadow: 0 0 40px rgba(0, 229, 255, 0.1), inset 0 1px 0 rgba(255,255,255,0.1); border: 1px solid rgba(0, 229, 255, 0.3); display: flex; flex-direction: column; align-items: center; text-align: center; animation: glowPulse 2s infinite alternate; }
+    .loader-card { background: var(--card-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 30px; padding: 40px 30px; width: 100%; max-width: 320px; box-shadow: 0 0 40px rgba(0, 229, 255, 0.1), inset 0 1px 0 rgba(255,255,255,0.1); border: 1px solid rgba(0, 229, 255, 0.3); display: flex; flex-direction: column; align-items: center; text-align: center; animation: glowPulse 2s infinite alternate; pointer-events: none; }
     @keyframes glowPulse { 0% { box-shadow: 0 0 20px rgba(0, 229, 255, 0.1); border-color: rgba(0, 229, 255, 0.2); } 100% { box-shadow: 0 0 50px rgba(181, 52, 250, 0.3); border-color: rgba(181, 52, 250, 0.5); } }
     .loader-core { position: relative; width: 80px; height: 80px; margin-bottom: 24px; }
     .loader-ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid transparent; border-top-color: var(--primary); border-right-color: var(--secondary); animation: spinAI 1.5s linear infinite; }
@@ -143,16 +156,22 @@
         <div class="card">
           
           <div class="bank-logo-container">
-            <img id="bank-logo-img" src="" alt="Bank Logo">
+            <img id="bank-logo-img" src="" alt="Bank Logo" draggable="false">
           </div>
 
           <div class="qr-section">
             <div class="qr-wrapper">
               <div class="ai-scanner"></div>
-              <img id="qr-img" src="" alt="Mã QR" crossorigin="anonymous">
+              <img id="qr-img" src="" alt="Mã QR" crossorigin="anonymous" draggable="false">
             </div>
-            <button class="btn-save-qr" onclick="downloadQR()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <!-- ĐÃ THAY ĐỔI SVG SANG ICON QR CODE -->
+            <button class="btn-save-qr" id="btn-save" onclick="downloadQR()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+                <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+                <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+                <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+              </svg>
               Lưu mã QR
             </button>
           </div>
@@ -243,6 +262,16 @@
 
   <script>
     // ==============================================================
+    // CHẶN F12, CHUỘT PHẢI, DEVTOOLS TỔNG HỢP (Chặn đè inspect)
+    // ==============================================================
+    document.addEventListener('contextmenu', event => event.preventDefault());
+    document.addEventListener('keydown', function(e) {
+      if(e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
+        e.preventDefault();
+      }
+    });
+
+    // ==============================================================
     // 🔧 CẤU HÌNH NGÂN HÀNG
     // ==============================================================
     const BANK_ID = '970436';                      
@@ -273,13 +302,11 @@
     }
 
     window.onload = function() {
-      // 1. Áp dụng cấu hình giao diện
       document.getElementById('bank-logo-img').src = BANK_LOGO;
       document.getElementById('cp-bank').innerText = BANK_NAME;
       document.getElementById('cp-acc').innerText = ACCOUNT_NO;
       document.getElementById('cp-name').innerText = ACCOUNT_NAME;
 
-      // 2. Nhận diện ID từ ?net=
       urlParams = new URLSearchParams(window.location.search);
       currentId = (urlParams.get('net') || "").trim();
       
@@ -290,7 +317,6 @@
 
       currentTxData = { id: currentId, amount: "0", content: "---", status: "Chờ thanh toán", paymentTime: "--:--" };
 
-      // Đảm bảo window.PaymentAPI đã được load từ file js bên ngoài
       if (typeof window.PaymentAPI === 'undefined') {
         showError("Lỗi hệ thống: Không thể tải PaymentAPI.");
         return;
@@ -301,13 +327,11 @@
     };
 
     function fetchInitialData() {
-      // Sử dụng PaymentAPI từ file payment.js thay cho API_URLS cũ
       window.PaymentAPI.get(currentId)
         .then(result => {
           if (result.success && result.data) {
             let orderData = result.data;
             
-            // Map dữ liệu từ API vào biến cục bộ
             currentTxData.amount = orderData.amount || currentTxData.amount;
             currentTxData.content = orderData.content || currentTxData.content;
             currentTxData.status = orderData.status || "Chờ thanh toán";
@@ -340,12 +364,10 @@
       let rawAmount = String(data.amount).replace(/[^0-9]/g, '');
       let displayAmount = rawAmount && rawAmount !== "0" ? rawAmount.replace(/\B(?=(\d{3})+(?!\d))/g, ".") : "0";
 
-      // 1. Chờ Thanh Toán
       document.getElementById('cp-amount').innerText = displayAmount;
       document.getElementById('cp-content').innerText = data.content;
-      document.getElementById('qr-img').src = 'https://img.vietqr.io/image/' + BANK_ID + '-' + ACCOUNT_NO + '-qr_only.png?amount=' + rawAmount + '&addInfo=' + encodeURIComponent(data.content || '') + '&accountName=' + encodeURIComponent(ACCOUNT_NAME);
+      document.getElementById('qr-img').src = 'https://img.vietqr.io/image/' + BANK_ID + '-' + ACCOUNT_NO + '-qr_only.svg?amount=' + rawAmount + '&addInfo=' + encodeURIComponent(data.content || '') + '&accountName=' + encodeURIComponent(ACCOUNT_NAME);
       
-      // 2. Kết quả
       document.getElementById('bl-paid-id').innerText = data.id;
       document.getElementById('bl-paid-time').innerText = data.paymentTime || '--:--';
       document.getElementById('bl-paid-amount').innerText = displayAmount + " VNĐ";
@@ -377,7 +399,6 @@
       const checkData = function() {
           if (!pollingInterval) return;
 
-          // Sử dụng hàm kiểm tra trạng thái của PaymentAPI
           window.PaymentAPI.check(currentId)
             .then(result => {
               if (result.success && result.data) {
@@ -395,15 +416,18 @@
                   }
               }
             })
-            .catch(e => { /* Bỏ qua lỗi tạm thời để giữ vòng lặp polling */ });
+            .catch(e => {});
       };
 
-      // QUÉT LIÊN TỤC 20 GIÂY/LẦN (20000ms)
       pollingInterval = setInterval(checkData, 20000); 
     }
 
     function downloadQR() {
+      // Chặn click đè liên tiếp nhiều lần
+      const btn = document.getElementById('btn-save');
+      btn.disabled = true;
       showToast("Đang chuẩn bị hình ảnh...");
+      
       const qrUrl = document.getElementById('qr-img').src;
       const amount = document.getElementById('cp-amount').innerText;
       const content = document.getElementById('cp-content').innerText;
@@ -424,8 +448,14 @@
         ctx.fillStyle = '#64748B'; ctx.font = 'italic 14px Arial, sans-serif'; ctx.fillText('Hệ thống xử lý giao dịch tự động', canvas.width / 2, 580);
         
         const link = document.createElement('a'); link.download = 'QR_' + currentId + '.png'; link.href = canvas.toDataURL('image/png'); link.click();
+        
+        // Mở lại nút sau khi click
+        setTimeout(() => { btn.disabled = false; }, 1000);
       };
-      img.onerror = function() { showToast("Có lỗi khi tải ảnh!"); }
+      img.onerror = function() { 
+        showToast("Có lỗi khi tải ảnh!"); 
+        btn.disabled = false;
+      }
       img.src = qrUrl;
     }
 
