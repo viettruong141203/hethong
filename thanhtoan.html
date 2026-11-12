@@ -24,7 +24,7 @@
 </head>
 <body class="text-slate-800 pb-24 selection:bg-indigo-500 selection:text-white">
 
-    <!-- HEADER HIỆN ĐẠI -->
+    <!-- HEADER -->
     <header class="bg-white/80 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
@@ -121,7 +121,7 @@
             <span id="error-message"></span>
         </div>
 
-        <!-- GIAO DIỆN THẺ DECK KIỂU MỚI (MODERN CARDS) -->
+        <!-- GRID DECK -->
         <div id="deck-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
 
         <!-- Trạng thái Trống -->
@@ -134,7 +134,7 @@
         </div>
     </main>
 
-    <!-- MODAL XEM CHI TIẾT ĐƠN HÀNG -->
+    <!-- MODAL XEM CHI TIẾT (HIỂN THỊ ĐẦY ĐỦ 6 TIÊU CHÍ) -->
     <div id="detail-modal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl modal-enter border border-slate-100 relative">
             <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-100">
@@ -147,30 +147,30 @@
                 </button>
             </div>
             
-            <div class="space-y-3.5 text-xs">
+            <div class="space-y-3 text-xs">
                 <div class="flex justify-between py-1.5 border-b border-slate-50">
-                    <span class="text-slate-400 font-medium">Mã đơn:</span>
+                    <span class="text-slate-400 font-medium">Mã giao dịch:</span>
                     <span id="detail-id" class="font-mono font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded"></span>
-                </div>
-                <div class="flex justify-between py-1.5 border-b border-slate-50">
-                    <span class="text-slate-400 font-medium">Số tiền:</span>
-                    <span id="detail-amount" class="font-black text-indigo-600 text-base"></span>
-                </div>
-                <div class="flex justify-between py-1.5 border-b border-slate-50">
-                    <span class="text-slate-400 font-medium">Trạng thái:</span>
-                    <span id="detail-status" class="font-bold"></span>
                 </div>
                 <div class="flex justify-between py-1.5 border-b border-slate-50">
                     <span class="text-slate-400 font-medium">Thời gian tạo:</span>
                     <span id="detail-time" class="font-medium text-slate-700"></span>
                 </div>
                 <div class="flex justify-between py-1.5 border-b border-slate-50">
-                    <span class="text-slate-400 font-medium">Thanh toán:</span>
+                    <span class="text-slate-400 font-medium">Thời gian thanh toán:</span>
                     <span id="detail-payment-time" class="font-medium text-slate-700"></span>
                 </div>
-                <div>
-                    <span class="block text-slate-400 font-medium mb-1">Nội dung ghi chú:</span>
-                    <div id="detail-content" class="bg-slate-50 p-3 rounded-xl font-mono text-[11px] text-slate-600 break-words border border-slate-100"></div>
+                <div class="flex justify-between py-1.5 border-b border-slate-50">
+                    <span class="text-slate-400 font-medium">Số tiền:</span>
+                    <span id="detail-amount" class="font-black text-indigo-600 text-sm"></span>
+                </div>
+                <div class="py-1.5 border-b border-slate-50">
+                    <span class="block text-slate-400 font-medium mb-1">Nội dung:</span>
+                    <div id="detail-content" class="bg-slate-50 p-2.5 rounded-xl font-mono text-[11px] text-slate-600 break-words border border-slate-100"></div>
+                </div>
+                <div class="flex justify-between py-1.5">
+                    <span class="text-slate-400 font-medium">Trạng thái:</span>
+                    <span id="detail-status" class="font-bold"></span>
                 </div>
             </div>
 
@@ -180,7 +180,7 @@
         </div>
     </div>
 
-    <!-- MODAL FORM TẠO ĐƠN MỚI (ĐƯỢC THIẾT KẾ LẠI CỰC KỲ ĐẸP MẮT) -->
+    <!-- MODAL TẠO ĐƠN -->
     <div id="add-modal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-sm w-full p-7 shadow-2xl modal-enter border border-slate-100 relative">
             <div class="text-center mb-6">
@@ -369,7 +369,6 @@
             renderDeck();
         }
 
-        // RENDER GIAO DIỆN THẺ DECK KIỂU MỚI (HIỆN ĐẠI & SANG TRỌNG)
         function renderDeck() {
             const deck = document.getElementById('deck-container');
             deck.innerHTML = '';
@@ -441,15 +440,14 @@
             if (!order) return;
 
             document.getElementById('detail-id').innerText = `#${order.id || 'N/A'}`;
+            document.getElementById('detail-time').innerText = order.time || 'Vừa xong';
+            document.getElementById('detail-payment-time').innerText = order.paymentTime || '-----';
             document.getElementById('detail-amount').innerText = `${Number(order.amount || 0).toLocaleString('vi-VN')} ₫`;
+            document.getElementById('detail-content').innerText = order.content || 'Không có nội dung ghi chú';
             
             const statusEl = document.getElementById('detail-status');
             statusEl.innerText = order.status || 'Chờ thanh toán';
             statusEl.className = `font-bold ${order.status === 'Đã thanh toán' ? 'text-emerald-600' : 'text-amber-600'}`;
-
-            document.getElementById('detail-time').innerText = order.time || 'Vừa xong';
-            document.getElementById('detail-payment-time').innerText = order.paymentTime || '-----';
-            document.getElementById('detail-content').innerText = order.content || 'Không có nội dung ghi chú';
 
             document.getElementById('detail-modal').classList.remove('hidden');
         }
@@ -498,7 +496,6 @@
             document.getElementById(modalId).classList.add('hidden');
         }
 
-        // GỬI EMAIL THỦ CÔNG TỪ FORM TÙY CHỈNH
         function handleManualEmailSubmit(e) {
             e.preventDefault();
             const emailNhan = document.getElementById('custom-email').value;
@@ -523,7 +520,6 @@
             }
         }
 
-        // TẠO ĐƠN & GỬI EMAIL TỰ ĐỘNG
         async function handleAddSubmit(e) {
             e.preventDefault();
             const amount = Number(document.getElementById('add-amount').value);
